@@ -163,7 +163,7 @@ pub fn AthenaWidget() -> impl IntoView {
                 None => return,
             };
             let win_w = win.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(1200.0);
-            let win_h = win.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+            let _win_h = win.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
             let right_boundary = (win_w - 90.0).max(120.0);
 
             // Compute delta time with tab-suspension clamping
@@ -182,7 +182,7 @@ pub fn AthenaWidget() -> impl IntoView {
                 if let Some((target_x, target_bottom)) = pointer_drag_pos.get() {
                     let prev_x = pos_x;
                     pos_x = target_x.clamp(left_boundary, right_boundary);
-                    pos_bottom = target_bottom.clamp(floor_bottom, win_h - 120.0);
+                    pos_bottom = target_bottom.max(floor_bottom);
 
                     if pos_x < prev_x - 0.5 {
                         direction = Direction::Left;
@@ -243,9 +243,8 @@ pub fn AthenaWidget() -> impl IntoView {
                 state = CharacterState::ChatStandby;
                 state_time = 0.0;
                 anim_accum_ms = 0.0;
-                // Preserve floating altitude if clicked in mid-air (clamped so thought bubble fits on screen)
-                let max_dock_bottom = (win_h - 540.0 - 140.0).max(floor_bottom);
-                chat_anchor_bottom = pos_bottom.clamp(floor_bottom, max_dock_bottom);
+                // Preserve floating altitude if clicked in mid-air (stays at current height)
+                chat_anchor_bottom = pos_bottom.max(floor_bottom);
                 pos_bottom = chat_anchor_bottom;
 
                 set_current_sprite.set(POSE_STANDBY);
@@ -615,7 +614,7 @@ pub fn AthenaWidget() -> impl IntoView {
         let modal_left = ideal_left.clamp(12.0, (win_w - modal_width - 12.0).max(12.0));
 
         // Position bottom of thought bubble directly above Nahida's head (+ gap for connector dots)
-        let modal_bottom = (bottom.get() + 116.0).min(win_h - modal_height - 16.0).max(16.0);
+        let modal_bottom = bottom.get() + 116.0;
 
         // Tail connector offset (points directly down towards Athena)
         let tail_x = (athena_center_x - modal_left).clamp(36.0, modal_width - 36.0);
