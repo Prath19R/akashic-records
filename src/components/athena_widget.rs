@@ -183,6 +183,9 @@ pub fn AthenaWidget() -> impl IntoView {
                     let prev_x = pos_x;
                     pos_x = target_x.clamp(left_boundary, right_boundary);
                     pos_bottom = target_bottom.max(floor_bottom);
+                    if is_open.get() {
+                        chat_anchor_bottom = pos_bottom;
+                    }
 
                     if pos_x < prev_x - 0.5 {
                         direction = Direction::Left;
@@ -221,8 +224,15 @@ pub fn AthenaWidget() -> impl IntoView {
                     return;
                 }
             } else if state == CharacterState::Dragging {
-                // Released from drag: if released above ground, float down with parachute!
-                if pos_bottom > floor_bottom + 15.0 {
+                // If chat is open, stay docked at the dragged floating altitude!
+                if is_open.get() {
+                    chat_anchor_bottom = pos_bottom;
+                    state = CharacterState::ChatStandby;
+                    state_time = 0.0;
+                    anim_accum_ms = 0.0;
+                    set_current_sprite.set(POSE_STANDBY);
+                } else if pos_bottom > floor_bottom + 15.0 {
+                    // Released above ground with chat closed: float down with parachute!
                     state = CharacterState::Dropped;
                     state_time = 0.0;
                     anim_accum_ms = 0.0;
