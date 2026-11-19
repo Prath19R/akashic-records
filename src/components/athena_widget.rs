@@ -1,72 +1,165 @@
 use leptos::prelude::*;
 use gloo_timers::callback::Interval;
 use wasm_bindgen::JsCast;
+use web_sys::PointerEvent;
 
-const SPRITES_WALK: [&str; 4] = [
-    "assets/chibi/01_movement/nahida_walk_left_01.png?v=5",
-    "assets/chibi/01_movement/nahida_walk_left_02.png?v=5",
-    "assets/chibi/01_movement/nahida_walk_left_03.png?v=5",
-    "assets/chibi/01_movement/nahida_walk_left_02.png?v=5",
+// ─────────────────────────────────────────────────────────────────────────────
+// 53 ASSET DEFINITIONS (manifest.json - nahida_chibi_assets_1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 01 Movement (Dedicated left and right sequences - no artificial mirroring needed)
+const RUN_LEFT: [&str; 6] = [
+    "assets/chibi/01_movement/run_left_01.png",
+    "assets/chibi/01_movement/run_left_02.png",
+    "assets/chibi/01_movement/run_left_03.png",
+    "assets/chibi/01_movement/run_left_04.png",
+    "assets/chibi/01_movement/run_left_05.png",
+    "assets/chibi/01_movement/run_left_06.png",
 ];
 
-const SPRITE_IMPACT: &str = "assets/chibi/02_physics_events/nahida_impact_01.png?v=5";
-const SPRITE_RECOVER: &str = "assets/chibi/02_physics_events/nahida_recover_01.png?v=5";
+const RUN_RIGHT: [&str; 6] = [
+    "assets/chibi/01_movement/run_right_01.png",
+    "assets/chibi/01_movement/run_right_02.png",
+    "assets/chibi/01_movement/run_right_03.png",
+    "assets/chibi/01_movement/run_right_04.png",
+    "assets/chibi/01_movement/run_right_05.png",
+    "assets/chibi/01_movement/run_right_06.png",
+];
 
-const SPRITE_THINK: &str = "assets/chibi/03_chat_interaction/nahida_think_pose.png?v=5";
-const SPRITE_PONDER: &str = "assets/chibi/03_chat_interaction/nahida_ponder_pose.png?v=5";
-const SPRITE_ASK_INVITE: &str = "assets/chibi/03_chat_interaction/nahida_ask_invite.png?v=5";
-const SPRITE_LOADING: &str = "assets/chibi/03_chat_interaction/nahida_loading_01.png?v=5";
-const SPRITE_EXCITED: &str = "assets/chibi/03_chat_interaction/nahida_excited_01.png?v=5";
-const SPRITE_ANSWERING: &str = "assets/chibi/03_chat_interaction/nahida_answering_01.png?v=5";
+// 02 Physics Events
+const DRAGGED_LEFT: [&str; 3] = [
+    "assets/chibi/02_physics_events/dragged_left_01.png",
+    "assets/chibi/02_physics_events/dragged_left_02.png",
+    "assets/chibi/02_physics_events/dragged_left_03.png",
+];
+
+// Right 02 is absent from source sheet; gently loop 01 and 03 as specified in brief
+const DRAGGED_RIGHT: [&str; 2] = [
+    "assets/chibi/02_physics_events/dragged_right_01.png",
+    "assets/chibi/02_physics_events/dragged_right_03.png",
+];
+
+const DROPPED_LEFT: &str = "assets/chibi/02_physics_events/dropped_left_01.png";
+const DROPPED_RIGHT: &str = "assets/chibi/02_physics_events/dropped_right_01.png";
+const SOFT_FALL: &str = "assets/chibi/02_physics_events/soft_fall_01.png";
+
+// One-shot recovery sequence: ending -> getting -> rising 03 -> rising 04
+const RECOVERY_FRAMES: [&str; 4] = [
+    "assets/chibi/02_physics_events/ending_left_01.png",
+    "assets/chibi/02_physics_events/getting_02.png",
+    "assets/chibi/02_physics_events/rising_03.png",
+    "assets/chibi/02_physics_events/rising_04.png",
+];
+
+// Rising 04 is the designated neutral standing pose fallback (per prompt brief)
+const POSE_STANDBY: &str = "assets/chibi/02_physics_events/rising_04.png";
+
+// 03 Chat Interaction
+const THINK_LEFT: [&str; 2] = [
+    "assets/chibi/03_chat_interaction/think_left_01.png",
+    "assets/chibi/03_chat_interaction/think_left_02.png",
+];
+
+const THINK_RIGHT: [&str; 2] = [
+    "assets/chibi/03_chat_interaction/think_right_01.png",
+    "assets/chibi/03_chat_interaction/think_right_02.png",
+];
+
+const EXCITED_LEFT: [&str; 2] = [
+    "assets/chibi/03_chat_interaction/excited_left_01.png",
+    "assets/chibi/03_chat_interaction/excited_left_03.png",
+];
+
+const EXCITED_RIGHT: [&str; 2] = [
+    "assets/chibi/03_chat_interaction/excited_right_01.png",
+    "assets/chibi/03_chat_interaction/excited_right_03.png",
+];
+
+// 05 Playful Actions
+const HOP_LEFT: &str = "assets/chibi/05_playful/hop_left_01.png";
+const HOP_RIGHT: &str = "assets/chibi/05_playful/hop_right_01.png";
+const TWIRL_LEFT: &str = "assets/chibi/05_playful/twirl_left_01.png";
+const TWIRL_RIGHT: &str = "assets/chibi/05_playful/twirl_right_01.png";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHARACTER STATE MACHINE
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum CompanionState {
-    Spawning,          // 0: Spawns at bottom-left
-    PatrolRight,       // 1: Walks forward (facing right) along bottom towards right edge
-    EdgeContact,       // 2: Hits right edge, recoils slightly
-    Recovery,          // 3: Recovers, shakes head, turns left
-    PatrolLeft,        // 4: Walks forward (facing left) along bottom towards left edge
-    LeftTurn,          // 5: Reaches left edge, turns around to face right
-    InterruptedChat,   // 6: Docked beside open chatbox
-    Thinking,          // 7: Athena AI generating response
-    Answering,         // 8: Athena AI completed answer
+pub enum Direction {
+    Left,
+    Right,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CharacterState {
+    Spawning,          // Scale up pop-in on startup
+    Standby,           // Neutral standing (rising_04) with subtle procedural float
+    Running,           // 60 Hz patrol along bottom edge (85ms per frame)
+    Dragging,          // Interactive pointer drag (follows pointer, plays dragged poses)
+    Dropped,           // Parachute descent with gentle sine-wave drift
+    SoftFall,          // Impact / recoil (soft_fall_01)
+    Recovery,          // One-shot 4-pose rising sequence
+    Thinking,          // AI thinking pose loop
+    Answering,         // AI excited burst & answering pose
+    ChatStandby,       // Idle docked beside open thought bubble
+    PlayfulHop,        // Spontaneous joyful hop
+    PlayfulTwirl,      // Spontaneous 360-degree spin
 }
 
 #[component]
 pub fn AthenaWidget() -> impl IntoView {
     let (is_open, set_is_open) = signal(false);
 
-    // Chibi Reactive State Signals (100% Rust)
-    let (x, set_x) = signal(24.0);
+    // Presentation Transforms & Pose Signals (Smooth 60 Hz Render Target)
+    let (x, set_x) = signal(28.0);
     let (bottom, set_bottom) = signal(20.0);
     let (scale, set_scale) = signal(0.0);
+    let (rotation, set_rotation) = signal(0.0);
     let (opacity, set_opacity) = signal(1.0);
-    let (flip, set_flip) = signal(-1.0); // -1.0 flips native-left sprites to face right
-    let (current_sprite, set_current_sprite) = signal(SPRITES_WALK[0]);
+    let (current_sprite, set_current_sprite) = signal(POSE_STANDBY);
+
+    // Floating Speech Bubble
     let (bubble_text, set_bubble_text) = signal("Awakening...");
     let (bubble_icon, set_bubble_icon) = signal("🌱");
     let (bubble_dot, set_bubble_dot) = signal("#34d399");
 
-    // Communication bridge from Athena iframe
+    // Drag Interaction State (Signals for reactive event handlers)
+    let (is_dragging_active, set_is_dragging_active) = signal(false);
+    let (pointer_drag_pos, set_pointer_drag_pos) = signal(Option::<(f64, f64)>::None);
+    let (pointer_just_dragged, set_pointer_just_dragged) = signal(false);
+
+    // Cross-frame event bridge from Athena iframe
     let (companion_event, set_companion_event) = signal(Option::<String>::None);
 
     let athena_url = move || {
         #[cfg(debug_assertions)]
-        { "http://localhost:8081/?embed=true&v=1.1.0" }
+        { "http://localhost:8081/?embed=true&v=1.2.0" }
         #[cfg(not(debug_assertions))]
-        { "https://prath19r.github.io/athena/?embed=true&v=1.1.0" }
+        { "https://prath19r.github.io/athena/?embed=true&v=1.2.0" }
     };
 
-    // Initialize 60fps Rust physics game-loop using gloo-timers Interval
+    // ─────────────────────────────────────────────────────────────────────────
+    // 60 HZ RUST WASM ANIMATION & PHYSICS ENGINE
+    // ─────────────────────────────────────────────────────────────────────────
     Effect::new(move |_| {
-        let mut state = CompanionState::Spawning;
-        let mut pos_x: f64 = 24.0;
-        let pos_bottom: f64 = 20.0;
-        let left_edge: f64 = 24.0;
+        let mut state = CharacterState::Spawning;
+        let mut direction = Direction::Right;
+
+        let mut pos_x: f64 = 28.0;
+        let mut pos_bottom: f64 = 20.0;
+        let floor_bottom: f64 = 20.0;
+        let left_boundary: f64 = 24.0;
+
         let mut state_time: f64 = 0.0;
-        let mut anim_tick: usize = 0;
+        let mut anim_accum_ms: f64 = 0.0;
+        let mut current_frame_idx: usize = 0;
         let mut was_open = false;
-        let mut moving_right = true;
+
+        let mut next_playful_tick: f64 = 8000.0; // Trigger playful events periodically
+
+        let perf = web_sys::window().and_then(|w| w.performance());
+        let mut last_now = perf.as_ref().map(|p| p.now()).unwrap_or(0.0);
 
         let interval = Interval::new(16, move || {
             let win = match web_sys::window() {
@@ -74,56 +167,123 @@ pub fn AthenaWidget() -> impl IntoView {
                 None => return,
             };
             let win_w = win.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(1200.0);
-            let right_edge = (win_w - 76.0).max(140.0);
+            let win_h = win.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+            let right_boundary = (win_w - 90.0).max(120.0);
 
-            state_time += 16.6;
-            anim_tick = anim_tick.wrapping_add(1);
+            // Compute delta time with tab-suspension clamping
+            let current_now = perf.as_ref().map(|p| p.now()).unwrap_or(last_now + 16.67);
+            let mut dt = current_now - last_now;
+            last_now = current_now;
+            if dt > 100.0 || dt <= 0.0 {
+                dt = 16.67;
+            }
 
+            state_time += dt;
+            anim_accum_ms += dt;
+
+            // Handle Pointer Drag Override
+            if is_dragging_active.get() {
+                if let Some((target_x, target_bottom)) = pointer_drag_pos.get() {
+                    let prev_x = pos_x;
+                    pos_x = target_x.clamp(left_boundary, right_boundary);
+                    pos_bottom = target_bottom.clamp(floor_bottom, win_h - 120.0);
+
+                    if pos_x < prev_x - 0.5 {
+                        direction = Direction::Left;
+                    } else if pos_x > prev_x + 0.5 {
+                        direction = Direction::Right;
+                    }
+
+                    state = CharacterState::Dragging;
+                    set_rotation.set(0.0);
+                    set_scale.set(1.0);
+                    set_opacity.set(1.0);
+
+                    // Advance drag frame
+                    if anim_accum_ms >= 120.0 {
+                        anim_accum_ms = 0.0;
+                        current_frame_idx = current_frame_idx.wrapping_add(1);
+                    }
+
+                    match direction {
+                        Direction::Left => {
+                            let f = current_frame_idx % DRAGGED_LEFT.len();
+                            set_current_sprite.set(DRAGGED_LEFT[f]);
+                        }
+                        Direction::Right => {
+                            let f = current_frame_idx % DRAGGED_RIGHT.len();
+                            set_current_sprite.set(DRAGGED_RIGHT[f]);
+                        }
+                    }
+
+                    set_bubble_text.set("Whoa! 🍃");
+                    set_bubble_icon.set("💨");
+                    set_bubble_dot.set("#60a5fa");
+
+                    set_x.set(pos_x);
+                    set_bottom.set(pos_bottom);
+                    return;
+                }
+            } else if state == CharacterState::Dragging {
+                // Released from drag: if released above ground, float down with parachute!
+                if pos_bottom > floor_bottom + 15.0 {
+                    state = CharacterState::Dropped;
+                    state_time = 0.0;
+                    anim_accum_ms = 0.0;
+                    set_current_sprite.set(if direction == Direction::Left { DROPPED_LEFT } else { DROPPED_RIGHT });
+                    set_bubble_text.set("Floating... ✨");
+                    set_bubble_icon.set("🪂");
+                    set_bubble_dot.set("#34d399");
+                } else {
+                    pos_bottom = floor_bottom;
+                    state = CharacterState::Standby;
+                    state_time = 0.0;
+                }
+            }
+
+            // Sync with Chat Open / Close state
             let open = is_open.get();
-
-            // Transition into Chat Dock when opened (Stand and serve answer WHERE CLICKED ON)
             if open && !was_open {
-                state = CompanionState::InterruptedChat;
+                state = CharacterState::ChatStandby;
                 state_time = 0.0;
+                anim_accum_ms = 0.0;
+                set_current_sprite.set(POSE_STANDBY);
                 set_bubble_text.set("Ask me anything!");
                 set_bubble_icon.set("✨");
                 set_bubble_dot.set("#34d399");
-                set_current_sprite.set(SPRITE_ASK_INVITE);
+                set_rotation.set(0.0);
                 set_scale.set(1.0);
-                set_opacity.set(1.0);
-                set_flip.set(1.0);
             } else if !open && was_open {
-                // When chat is closed, resume from current spot in same direction
-                if moving_right {
-                    state = CompanionState::PatrolRight;
-                    set_flip.set(-1.0);
-                    set_bubble_text.set("Ask Athena!");
-                    set_bubble_icon.set("💬");
-                } else {
-                    state = CompanionState::PatrolLeft;
-                    set_flip.set(1.0);
-                    set_bubble_text.set("Exploring...");
-                    set_bubble_icon.set("🌿");
-                }
+                state = CharacterState::Running;
                 state_time = 0.0;
+                anim_accum_ms = 0.0;
+                set_rotation.set(0.0);
+                set_bubble_text.set("Exploring...");
+                set_bubble_icon.set("🌿");
             }
             was_open = open;
 
-            // Handle iframe events during chat mode
+            // Handle iframe event communication during chat
             if open {
                 if let Some(ev) = companion_event.get() {
                     match ev.as_str() {
                         "THINKING" => {
-                            state = CompanionState::Thinking;
+                            state = CharacterState::Thinking;
                             state_time = 0.0;
+                            anim_accum_ms = 0.0;
+                            current_frame_idx = 0;
                         }
                         "ANSWERING" => {
-                            state = CompanionState::Answering;
+                            state = CharacterState::Answering;
                             state_time = 0.0;
+                            anim_accum_ms = 0.0;
+                            current_frame_idx = 0;
                         }
                         "WAIT" => {
-                            state = CompanionState::InterruptedChat;
+                            state = CharacterState::ChatStandby;
                             state_time = 0.0;
+                            anim_accum_ms = 0.0;
+                            set_current_sprite.set(POSE_STANDBY);
                         }
                         _ => {}
                     }
@@ -131,159 +291,236 @@ pub fn AthenaWidget() -> impl IntoView {
                 }
             }
 
+            // ─────────────────────────────────────────────────────────────────
+            // STATE EXECUTION
+            // ─────────────────────────────────────────────────────────────────
             match state {
-                // State 0: Spawning at Bottom-Left
-                CompanionState::Spawning => {
-                    pos_x = left_edge;
+                // 1. Spawning Pop-in
+                CharacterState::Spawning => {
+                    pos_bottom = floor_bottom;
                     let sc = (state_time / 250.0).min(1.0);
                     set_scale.set(sc);
                     set_opacity.set(1.0);
-                    set_flip.set(-1.0); // Face right
-                    set_current_sprite.set(SPRITE_THINK);
-                    set_bubble_text.set("Awakening...");
-                    set_bubble_icon.set("🌱");
-                    set_bubble_dot.set("#34d399");
+                    set_current_sprite.set(POSE_STANDBY);
+                    set_rotation.set(0.0);
 
                     if state_time >= 250.0 {
-                        state = CompanionState::PatrolRight;
+                        state = CharacterState::Running;
+                        direction = Direction::Right;
                         state_time = 0.0;
-                        moving_right = true;
+                        anim_accum_ms = 0.0;
+                        set_bubble_text.set("Ask Athena!");
+                        set_bubble_icon.set("💬");
+                    }
+                }
+
+                // 2. Running Patrol (Smooth 60 Hz Translation + 85ms Pose Hold)
+                CharacterState::Running => {
+                    pos_bottom = floor_bottom;
+                    set_scale.set(1.0);
+                    set_opacity.set(1.0);
+                    set_rotation.set(0.0);
+
+                    // Speed: 1.1 px per frame for calm, steady walk
+                    let speed = 1.1;
+
+                    // Advance running pose every 85ms
+                    if anim_accum_ms >= 85.0 {
+                        anim_accum_ms = 0.0;
+                        current_frame_idx = (current_frame_idx + 1) % 6;
+                    }
+
+                    match direction {
+                        Direction::Right => {
+                            pos_x += speed;
+                            set_current_sprite.set(RUN_RIGHT[current_frame_idx]);
+
+                            if pos_x >= right_boundary {
+                                pos_x = right_boundary;
+                                state = CharacterState::SoftFall;
+                                state_time = 0.0;
+                                anim_accum_ms = 0.0;
+                                set_current_sprite.set(SOFT_FALL);
+                                set_bubble_text.set("ouch!");
+                                set_bubble_icon.set("💫");
+                                set_bubble_dot.set("#f59e0b");
+                            }
+                        }
+                        Direction::Left => {
+                            pos_x -= speed;
+                            set_current_sprite.set(RUN_LEFT[current_frame_idx]);
+
+                            if pos_x <= left_boundary {
+                                pos_x = left_boundary;
+                                state = CharacterState::SoftFall;
+                                state_time = 0.0;
+                                anim_accum_ms = 0.0;
+                                set_current_sprite.set(SOFT_FALL);
+                                set_bubble_text.set("Turning... 🍃");
+                                set_bubble_icon.set("🍃");
+                                set_bubble_dot.set("#f59e0b");
+                            }
+                        }
+                    }
+
+                    // Periodic spontaneous playful event (Hop or Twirl)
+                    if state_time >= next_playful_tick {
+                        state_time = 0.0;
+                        next_playful_tick = 12000.0; // Next check in 12s
+                        if (pos_x as usize) % 2 == 0 {
+                            state = CharacterState::PlayfulHop;
+                            anim_accum_ms = 0.0;
+                            set_current_sprite.set(if direction == Direction::Left { HOP_LEFT } else { HOP_RIGHT });
+                            set_bubble_text.set("Hop! ✨");
+                            set_bubble_icon.set("✨");
+                        } else {
+                            state = CharacterState::PlayfulTwirl;
+                            anim_accum_ms = 0.0;
+                            set_current_sprite.set(if direction == Direction::Left { TWIRL_LEFT } else { TWIRL_RIGHT });
+                            set_bubble_text.set("Spin! 🌸");
+                            set_bubble_icon.set("🌸");
+                        }
+                    }
+                }
+
+                // 3. Dropped / Parachute Float (Downwards drift with gentle sine sway)
+                CharacterState::Dropped => {
+                    pos_bottom -= 1.8; // Gentle downward speed
+                    let sway = (state_time / 300.0).sin() * 1.5;
+                    pos_x = (pos_x + sway).clamp(left_boundary, right_boundary);
+
+                    set_current_sprite.set(if direction == Direction::Left { DROPPED_LEFT } else { DROPPED_RIGHT });
+                    set_rotation.set(sway * 3.0);
+
+                    if pos_bottom <= floor_bottom {
+                        pos_bottom = floor_bottom;
+                        state = CharacterState::SoftFall;
+                        state_time = 0.0;
+                        anim_accum_ms = 0.0;
+                        set_rotation.set(0.0);
+                        set_current_sprite.set(SOFT_FALL);
+                        set_bubble_text.set("Landed softly! ✨");
+                        set_bubble_icon.set("✨");
+                    }
+                }
+
+                // 4. Soft Fall Impact / Recoil (350ms one-shot)
+                CharacterState::SoftFall => {
+                    set_current_sprite.set(SOFT_FALL);
+                    let bounce = (state_time / 350.0).min(1.0) * std::f64::consts::PI;
+                    set_rotation.set(if direction == Direction::Right { bounce.sin() * 6.0 } else { -bounce.sin() * 6.0 });
+
+                    if state_time >= 350.0 {
+                        state = CharacterState::Recovery;
+                        state_time = 0.0;
+                        anim_accum_ms = 0.0;
+                        current_frame_idx = 0;
+                        set_rotation.set(0.0);
+                        set_bubble_text.set("Getting up...");
+                        set_bubble_icon.set("🌱");
+                    }
+                }
+
+                // 5. One-Shot Recovery (ending -> getting -> rising 03 -> rising 04)
+                CharacterState::Recovery => {
+                    set_rotation.set(0.0);
+                    // 180ms per recovery frame
+                    if anim_accum_ms >= 180.0 {
+                        anim_accum_ms = 0.0;
+                        current_frame_idx += 1;
+                    }
+
+                    if current_frame_idx < RECOVERY_FRAMES.len() {
+                        set_current_sprite.set(RECOVERY_FRAMES[current_frame_idx]);
+                    } else {
+                        // Completed recovery: reverse direction and resume walking
+                        direction = if direction == Direction::Right { Direction::Left } else { Direction::Right };
+                        state = CharacterState::Running;
+                        state_time = 0.0;
+                        anim_accum_ms = 0.0;
+                        current_frame_idx = 0;
                         set_bubble_text.set("Ask Athena!");
                         set_bubble_icon.set("💬");
                         set_bubble_dot.set("#34d399");
                     }
                 }
 
-                // State 1: Walking Left-to-Right along Bottom (Facing Right, calm slow stroll)
-                CompanionState::PatrolRight => {
-                    moving_right = true;
-                    pos_x += 1.1; // Slower, relaxed walking speed
-                    set_scale.set(1.0);
-                    set_opacity.set(1.0);
-                    set_flip.set(-1.0); // -1.0 faces forward to the right
+                // 6. Playful Hop (450ms vertical arc)
+                CharacterState::PlayfulHop => {
+                    let progress = (state_time / 450.0).min(1.0);
+                    let hop_y = (progress * std::f64::consts::PI).sin() * 24.0;
+                    pos_bottom = floor_bottom + hop_y;
+                    set_current_sprite.set(if direction == Direction::Left { HOP_LEFT } else { HOP_RIGHT });
 
-                    // Gentle walk cycle: 01 -> 02 -> 03 -> 02
-                    let frame_idx = (anim_tick / 8) % SPRITES_WALK.len();
-                    set_current_sprite.set(SPRITES_WALK[frame_idx]);
-
-                    if pos_x >= right_edge {
-                        pos_x = right_edge;
-                        state = CompanionState::EdgeContact;
+                    if state_time >= 450.0 {
+                        pos_bottom = floor_bottom;
+                        state = CharacterState::Running;
                         state_time = 0.0;
-                        set_current_sprite.set(SPRITE_IMPACT);
-                        set_bubble_text.set("ouch!");
-                        set_bubble_icon.set("💫");
-                        set_bubble_dot.set("#f59e0b");
+                        anim_accum_ms = 0.0;
                     }
                 }
 
-                // State 2: Edge Impact Bounce at Right Edge
-                CompanionState::EdgeContact => {
-                    let bounce = (state_time / 300.0).min(1.0) * std::f64::consts::PI;
-                    pos_x = right_edge - bounce.sin() * 7.0;
+                // 7. Playful Twirl (500ms 360-degree rotation)
+                CharacterState::PlayfulTwirl => {
+                    let progress = (state_time / 500.0).min(1.0);
+                    let rot = progress * 360.0;
+                    set_rotation.set(rot);
+                    set_current_sprite.set(if direction == Direction::Left { TWIRL_LEFT } else { TWIRL_RIGHT });
 
-                    if state_time >= 300.0 {
-                        state = CompanionState::Recovery;
+                    if state_time >= 500.0 {
+                        set_rotation.set(0.0);
+                        state = CharacterState::Running;
                         state_time = 0.0;
-                        set_current_sprite.set(SPRITE_RECOVER);
-                        set_bubble_text.set("dizzy...");
-                        set_bubble_icon.set("🌀");
+                        anim_accum_ms = 0.0;
                     }
                 }
 
-                // State 3: Recovery & Turn Around
-                CompanionState::Recovery => {
-                    if state_time < 350.0 {
-                        set_current_sprite.set(SPRITE_RECOVER);
-                        set_flip.set(-1.0);
-                    } else if state_time < 750.0 {
-                        set_current_sprite.set(SPRITE_THINK);
-                        set_bubble_text.set("I'm okay! ✨");
-                        set_bubble_icon.set("✨");
-                        set_flip.set(1.0); // Turn around to face left
-                    } else {
-                        state = CompanionState::PatrolLeft;
-                        state_time = 0.0;
-                        moving_right = false;
-                        set_flip.set(1.0); // 1.0 faces forward to the left
-                        set_bubble_text.set("Exploring...");
-                        set_bubble_icon.set("🌿");
-                        set_bubble_dot.set("#10b981");
+                // 8. Thinking (Slow 500ms pose loop)
+                CharacterState::Thinking => {
+                    pos_bottom = floor_bottom;
+                    set_rotation.set(0.0);
+                    if anim_accum_ms >= 500.0 {
+                        anim_accum_ms = 0.0;
+                        current_frame_idx = (current_frame_idx + 1) % 2;
                     }
-                }
 
-                // State 4: Walking Right-to-Left along Bottom (Facing Left, calm slow stroll)
-                CompanionState::PatrolLeft => {
-                    moving_right = false;
-                    pos_x -= 1.1; // Slower, relaxed walking speed
-                    set_flip.set(1.0); // 1.0 faces forward to the left
-
-                    // Gentle walk cycle: 01 -> 02 -> 03 -> 02
-                    let frame_idx = (anim_tick / 8) % SPRITES_WALK.len();
-                    set_current_sprite.set(SPRITES_WALK[frame_idx]);
-
-                    if pos_x <= left_edge {
-                        pos_x = left_edge;
-                        state = CompanionState::LeftTurn;
-                        state_time = 0.0;
-                        set_bubble_text.set("Turning... 🍃");
-                        set_bubble_icon.set("🍃");
+                    match direction {
+                        Direction::Left => set_current_sprite.set(THINK_LEFT[current_frame_idx]),
+                        Direction::Right => set_current_sprite.set(THINK_RIGHT[current_frame_idx]),
                     }
-                }
-
-                // State 5: Turn Around at Left Edge
-                CompanionState::LeftTurn => {
-                    pos_x = left_edge;
-                    if state_time < 500.0 {
-                        set_current_sprite.set(SPRITE_PONDER);
-                        set_flip.set(1.0);
-                    } else if state_time < 800.0 {
-                        set_current_sprite.set(SPRITE_THINK);
-                        set_flip.set(-1.0); // Turn to face right
-                        set_bubble_text.set("Let's go! ✨");
-                        set_bubble_icon.set("✨");
-                    } else {
-                        state = CompanionState::PatrolRight;
-                        state_time = 0.0;
-                        moving_right = true;
-                        set_flip.set(-1.0);
-                        set_bubble_text.set("Ask Athena!");
-                        set_bubble_icon.set("💬");
-                    }
-                }
-
-                // State 6: Interrupted Chat (STAYS WHERE CLICKED ON, zero teleportation)
-                CompanionState::InterruptedChat => {
-                    set_flip.set(1.0);
-                    set_opacity.set(1.0);
-
-                    let cycle = (state_time / 3000.0) as usize % 2;
-                    set_current_sprite.set(if cycle == 0 { SPRITE_ASK_INVITE } else { SPRITE_PONDER });
-                }
-
-                // State 7: Thinking & Loading (STAYS WHERE CLICKED ON)
-                CompanionState::Thinking => {
-                    let frame = (anim_tick / 8) % 2;
-                    set_current_sprite.set(if frame == 0 { SPRITE_LOADING } else { SPRITE_THINK });
                     set_bubble_text.set("Thinking...");
                     set_bubble_icon.set("💭");
                     set_bubble_dot.set("#60a5fa");
                 }
 
-                // State 8: Answering (STAYS WHERE CLICKED ON)
-                CompanionState::Answering => {
-                    if state_time < 1000.0 {
-                        set_current_sprite.set(SPRITE_EXCITED);
-                        set_bubble_text.set("Got it!");
-                        set_bubble_icon.set("🌟");
-                        set_bubble_dot.set("#fbbf24");
-                    } else {
-                        let frame = (anim_tick / 8) % 2;
-                        set_current_sprite.set(if frame == 0 { SPRITE_ANSWERING } else { SPRITE_ASK_INVITE });
-                        set_bubble_text.set("Explaining...");
-                        set_bubble_icon.set("✨");
+                // 9. Answering / Excited (220ms pose loop)
+                CharacterState::Answering => {
+                    pos_bottom = floor_bottom;
+                    set_rotation.set(0.0);
+                    if anim_accum_ms >= 220.0 {
+                        anim_accum_ms = 0.0;
+                        current_frame_idx = (current_frame_idx + 1) % 2;
                     }
+
+                    match direction {
+                        Direction::Left => set_current_sprite.set(EXCITED_LEFT[current_frame_idx]),
+                        Direction::Right => set_current_sprite.set(EXCITED_RIGHT[current_frame_idx]),
+                    }
+                    set_bubble_text.set("Explaining...");
+                    set_bubble_icon.set("✨");
+                    set_bubble_dot.set("#fbbf24");
                 }
+
+                // 10. Standby / Neutral Standing (rising_04 with subtle procedural float)
+                CharacterState::Standby | CharacterState::ChatStandby => {
+                    set_current_sprite.set(POSE_STANDBY);
+                    set_rotation.set(0.0);
+                    // Subtle float: ~1.5px vertical breath cycle
+                    let float_y = (state_time / 1200.0).sin() * 1.5;
+                    pos_bottom = floor_bottom + float_y;
+                }
+
+                CharacterState::Dragging => {}
             }
 
             set_x.set(pos_x);
@@ -293,13 +530,15 @@ pub fn AthenaWidget() -> impl IntoView {
         interval.forget();
     });
 
-    // Handle cross-frame messages from Athena chat in pure Rust
+    // ─────────────────────────────────────────────────────────────────────────
+    // CROSS-FRAME ATHENA STATE LISTENER
+    // ─────────────────────────────────────────────────────────────────────────
     let _ = window_event_listener_untyped("message", move |ev| {
         if let Ok(msg_ev) = ev.dyn_into::<web_sys::MessageEvent>() {
             if let Ok(val) = msg_ev.data().dyn_into::<js_sys::Object>() {
                 if let Ok(ty) = js_sys::Reflect::get(&val, &"type".into()) {
                     if ty.as_string().as_deref() == Some("ATHENA_STATE") {
-                        if let Ok(status) = js_sys::Reflect::get(&val, &"status".into()) {
+                        if let Ok(status) = js_sys::Reflect::get(&val, &"state".into()) {
                             if let Some(s) = status.as_string() {
                                 set_companion_event.set(Some(s));
                             }
@@ -310,10 +549,68 @@ pub fn AthenaWidget() -> impl IntoView {
         }
     });
 
-    let on_nahida_click = move |_| {
-        set_is_open.update(|v| *v = !*v);
+    // ─────────────────────────────────────────────────────────────────────────
+    // POINTER DRAG & CLICK HANDLERS
+    // ─────────────────────────────────────────────────────────────────────────
+    let drag_start = StoredValue::new((0.0, 0.0, 0.0, 0.0)); // (start_x, start_y, init_pos_x, init_pos_bottom)
+
+    let on_pointer_down = move |ev: PointerEvent| {
+        if let Some(target) = ev.current_target() {
+            if let Ok(elem) = target.dyn_into::<web_sys::Element>() {
+                let _ = elem.set_pointer_capture(ev.pointer_id());
+            }
+        }
+
+        let sx = ev.client_x() as f64;
+        let sy = ev.client_y() as f64;
+        drag_start.set_value((sx, sy, x.get(), bottom.get()));
+        set_is_dragging_active.set(false);
+        set_pointer_just_dragged.set(false);
     };
 
+    let on_pointer_move = move |ev: PointerEvent| {
+        let (sx, sy, init_x, init_bottom) = drag_start.get_value();
+        if sx == 0.0 && sy == 0.0 {
+            return;
+        }
+
+        let cx = ev.client_x() as f64;
+        let cy = ev.client_y() as f64;
+        let dx = cx - sx;
+        let dy = cy - sy;
+
+        // If moved more than 6px, initiate drag mode
+        if (dx * dx + dy * dy).sqrt() > 6.0 {
+            set_is_dragging_active.set(true);
+            set_pointer_just_dragged.set(true);
+
+            let new_x = init_x + dx;
+            let new_bottom = init_bottom - dy;
+            set_pointer_drag_pos.set(Some((new_x, new_bottom)));
+        }
+    };
+
+    let on_pointer_up = move |ev: PointerEvent| {
+        if let Some(target) = ev.current_target() {
+            if let Ok(elem) = target.dyn_into::<web_sys::Element>() {
+                let _ = elem.release_pointer_capture(ev.pointer_id());
+            }
+        }
+
+        let was_drag = pointer_just_dragged.get();
+        drag_start.set_value((0.0, 0.0, 0.0, 0.0));
+        set_is_dragging_active.set(false);
+        set_pointer_drag_pos.set(None);
+
+        // If it was a simple click without dragging, toggle chat modal
+        if !was_drag {
+            set_is_open.update(|v| *v = !*v);
+        }
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DYNAMIC THOUGHT BUBBLE LAYOUT (ANCHORED DIRECTLY ABOVE NAHIDA)
+    // ─────────────────────────────────────────────────────────────────────────
     let modal_layout = move || {
         let (win_w, win_h) = if let Some(w) = web_sys::window() {
             let width = w.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(1200.0);
@@ -323,16 +620,16 @@ pub fn AthenaWidget() -> impl IntoView {
             (1200.0, 800.0)
         };
 
-        // Thought bubble size: 460px wide, 540px high on desktop (readable size, not too big, not too small)
+        // Thought bubble size: 460px max width, 540px max height (readable, not too big or small)
         let modal_width: f64 = 460.0_f64.min(win_w - 24.0);
         let modal_height: f64 = 540.0_f64.min(win_h - 165.0).max(380.0);
 
-        // Center thought bubble horizontally over Athena's current X position
-        let athena_center_x = x.get() + 40.0;
+        // Center thought bubble horizontally over Nahida's current X position
+        let athena_center_x = x.get() + 48.0;
         let ideal_left = athena_center_x - (modal_width / 2.0);
         let modal_left = ideal_left.clamp(12.0, (win_w - modal_width - 12.0).max(12.0));
 
-        // Position bottom of thought bubble directly above Athena (Athena is at bottom.get() + 96px height)
+        // Position bottom of thought bubble directly above Nahida's head (+ gap for connector dots)
         let modal_bottom = bottom.get() + 116.0;
 
         // Tail connector offset (points directly down towards Athena)
@@ -410,16 +707,23 @@ pub fn AthenaWidget() -> impl IntoView {
                 }
             }}
 
-            // Pure Rust Nahida Companion (Singleton: exactly one DOM instance)
+            // ─────────────────────────────────────────────────────────────────
+            // 60 HZ INTERACTIVE NAHIDA CHIBI (STABLE BASELINE STAGE ANCHOR)
+            // ─────────────────────────────────────────────────────────────────
             <div
                 id="nahida_companion"
-                on:click=on_nahida_click
-                title="Click to talk with Athena AI Guide!"
+                on:pointerdown=on_pointer_down
+                on:pointermove=on_pointer_move
+                on:pointerup=on_pointer_up
+                on:pointercancel=on_pointer_up
+                title="Click to chat with Athena AI Guide! (Drag to move or parachute)"
                 style=move || format!(
-                    "position: fixed; left: {}px; bottom: {}px; opacity: {}; z-index: 9990; cursor: pointer; user-select: none; will-change: left, bottom; display: flex; flex-direction: column; align-items: center;",
+                    "position: fixed; left: {}px; bottom: {}px; opacity: {}; z-index: 9990; cursor: grab; user-select: none; touch-action: none; will-change: transform; transform: translate3d(0, 0, 0) rotate({}deg) scale({}); display: flex; flex-direction: column; align-items: center;",
                     x.get(),
                     bottom.get(),
-                    opacity.get()
+                    opacity.get(),
+                    rotation.get(),
+                    scale.get()
                 )
             >
                 // Floating Speech Bubble (Fades when thought bubble opens)
@@ -437,17 +741,14 @@ pub fn AthenaWidget() -> impl IntoView {
                     ></span>
                 </div>
 
-                // Animated Nahida Sprite Frame (Bigger & clearly visible on bottom, fixed height to prevent growing/shrinking)
-                <img
-                    src=move || current_sprite.get()
-                    alt="Nahida Chibi Companion"
-                    class="h-24 w-auto drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] select-none pointer-events-none"
-                    style=move || format!(
-                        "transform: scale({}) scaleX({}); transform-origin: bottom center;",
-                        scale.get(),
-                        flip.get()
-                    )
-                />
+                // Fixed-Height Stage Box (96px height, bottom-center foot anchor prevents all jumping)
+                <div class="h-24 w-28 flex items-end justify-center pointer-events-none select-none">
+                    <img
+                        src=move || current_sprite.get()
+                        alt="Nahida Chibi Companion"
+                        class="max-h-24 w-auto object-contain object-bottom drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] select-none pointer-events-none"
+                    />
+                </div>
             </div>
         </div>
     }

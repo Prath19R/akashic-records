@@ -1,0 +1,432 @@
+{
+  "asset_set": "nahida_chibi_assets",
+  "source_image": "Gemini_Generated_Image_ilej80ilej80ilej_2.png",
+  "asset_count": 53,
+  "background": "Checkerboard was baked into the source and removed with grayscale color-keying; all exported PNGs have alpha transparency.",
+  "assets": [
+    {
+      "name": "run_left_01",
+      "category": "01_movement",
+      "file": "01_movement/run_left_01.png",
+      "width": 142,
+      "height": 197,
+      "source_label": "Run L01"
+    },
+    {
+      "name": "run_left_02",
+      "category": "01_movement",
+      "file": "01_movement/run_left_02.png",
+      "width": 128,
+      "height": 197,
+      "source_label": "Run L02"
+    },
+    {
+      "name": "run_left_03",
+      "category": "01_movement",
+      "file": "01_movement/run_left_03.png",
+      "width": 127,
+      "height": 197,
+      "source_label": "Run L03"
+    },
+    {
+      "name": "run_left_04",
+      "category": "01_movement",
+      "file": "01_movement/run_left_04.png",
+      "width": 128,
+      "height": 197,
+      "source_label": "Run L04"
+    },
+    {
+      "name": "run_left_05",
+      "category": "01_movement",
+      "file": "01_movement/run_left_05.png",
+      "width": 127,
+      "height": 197,
+      "source_label": "Run L05"
+    },
+    {
+      "name": "run_left_06",
+      "category": "01_movement",
+      "file": "01_movement/run_left_06.png",
+      "width": 127,
+      "height": 197,
+      "source_label": "Run L06"
+    },
+    {
+      "name": "run_right_01",
+      "category": "01_movement",
+      "file": "01_movement/run_right_01.png",
+      "width": 126,
+      "height": 197,
+      "source_label": "Run R01"
+    },
+    {
+      "name": "run_right_02",
+      "category": "01_movement",
+      "file": "01_movement/run_right_02.png",
+      "width": 127,
+      "height": 197,
+      "source_label": "Run R02"
+    },
+    {
+      "name": "run_right_03",
+      "category": "01_movement",
+      "file": "01_movement/run_right_03.png",
+      "width": 127,
+      "height": 197,
+      "source_label": "Run R03"
+    },
+    {
+      "name": "run_right_04",
+      "category": "01_movement",
+      "file": "01_movement/run_right_04.png",
+      "width": 127,
+      "height": 197,
+      "source_label": "Run R04"
+    },
+    {
+      "name": "run_right_05",
+      "category": "01_movement",
+      "file": "01_movement/run_right_05.png",
+      "width": 126,
+      "height": 197,
+      "source_label": "Run R05"
+    },
+    {
+      "name": "run_right_06",
+      "category": "01_movement",
+      "file": "01_movement/run_right_06.png",
+      "width": 93,
+      "height": 197,
+      "source_label": "Run R06"
+    },
+    {
+      "name": "dragged_left_01",
+      "category": "02_physics_events",
+      "file": "02_physics_events/dragged_left_01.png",
+      "width": 160,
+      "height": 175,
+      "source_label": "Dragged L01"
+    },
+    {
+      "name": "dragged_left_02",
+      "category": "02_physics_events",
+      "file": "02_physics_events/dragged_left_02.png",
+      "width": 175,
+      "height": 175,
+      "source_label": "Dragged L02"
+    },
+    {
+      "name": "dragged_left_03",
+      "category": "02_physics_events",
+      "file": "02_physics_events/dragged_left_03.png",
+      "width": 190,
+      "height": 175,
+      "source_label": "Dragged L03"
+    },
+    {
+      "name": "dragged_right_01",
+      "category": "02_physics_events",
+      "file": "02_physics_events/dragged_right_01.png",
+      "width": 158,
+      "height": 175,
+      "source_label": "Dragged R01"
+    },
+    {
+      "name": "dragged_right_03",
+      "category": "02_physics_events",
+      "file": "02_physics_events/dragged_right_03.png",
+      "width": 180,
+      "height": 175,
+      "source_label": "Dragged R03"
+    },
+    {
+      "name": "dropped_left_01",
+      "category": "02_physics_events",
+      "file": "02_physics_events/dropped_left_01.png",
+      "width": 170,
+      "height": 225,
+      "source_label": "Dropped L01"
+    },
+    {
+      "name": "dropped_right_01",
+      "category": "02_physics_events",
+      "file": "02_physics_events/dropped_right_01.png",
+      "width": 181,
+      "height": 225,
+      "source_label": "Dropped R01"
+    },
+    {
+      "name": "soft_fall_01",
+      "category": "02_physics_events",
+      "file": "02_physics_events/soft_fall_01.png",
+      "width": 226,
+      "height": 187,
+      "source_label": "Soft Fall"
+    },
+    {
+      "name": "ending_left_01",
+      "category": "02_physics_events",
+      "file": "02_physics_events/ending_left_01.png",
+      "width": 212,
+      "height": 174,
+      "source_label": "Ending L01"
+    },
+    {
+      "name": "getting_02",
+      "category": "02_physics_events",
+      "file": "02_physics_events/getting_02.png",
+      "width": 144,
+      "height": 176,
+      "source_label": "Getting 02"
+    },
+    {
+      "name": "rising_03",
+      "category": "02_physics_events",
+      "file": "02_physics_events/rising_03.png",
+      "width": 180,
+      "height": 190,
+      "source_label": "Rising 03"
+    },
+    {
+      "name": "rising_04",
+      "category": "02_physics_events",
+      "file": "02_physics_events/rising_04.png",
+      "width": 137,
+      "height": 190,
+      "source_label": "Rising 04"
+    },
+    {
+      "name": "angry_left_01",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_left_01.png",
+      "width": 157,
+      "height": 173,
+      "source_label": "Angry L01"
+    },
+    {
+      "name": "angry_left_02",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_left_02.png",
+      "width": 141,
+      "height": 173,
+      "source_label": "Angry L02"
+    },
+    {
+      "name": "angry_left_03",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_left_03.png",
+      "width": 137,
+      "height": 173,
+      "source_label": "Angry L03"
+    },
+    {
+      "name": "angry_left_04",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_left_04.png",
+      "width": 144,
+      "height": 173,
+      "source_label": "Angry L04"
+    },
+    {
+      "name": "angry_right_01",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_right_01.png",
+      "width": 131,
+      "height": 173,
+      "source_label": "Angry R01"
+    },
+    {
+      "name": "angry_right_02",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_right_02.png",
+      "width": 138,
+      "height": 173,
+      "source_label": "Angry R02"
+    },
+    {
+      "name": "angry_right_03",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_right_03.png",
+      "width": 135,
+      "height": 173,
+      "source_label": "Angry R03"
+    },
+    {
+      "name": "angry_right_04",
+      "category": "04_emotions",
+      "file": "04_emotions/angry_right_04.png",
+      "width": 141,
+      "height": 173,
+      "source_label": "Angry R04"
+    },
+    {
+      "name": "hop_left_01",
+      "category": "05_playful",
+      "file": "05_playful/hop_left_01.png",
+      "width": 149,
+      "height": 152,
+      "source_label": "Hop L01"
+    },
+    {
+      "name": "hop_right_01",
+      "category": "05_playful",
+      "file": "05_playful/hop_right_01.png",
+      "width": 128,
+      "height": 152,
+      "source_label": "Hop R01"
+    },
+    {
+      "name": "twirl_left_01",
+      "category": "05_playful",
+      "file": "05_playful/twirl_left_01.png",
+      "width": 136,
+      "height": 152,
+      "source_label": "Twirl L01"
+    },
+    {
+      "name": "twirl_right_01",
+      "category": "05_playful",
+      "file": "05_playful/twirl_right_01.png",
+      "width": 146,
+      "height": 152,
+      "source_label": "Twirl R01"
+    },
+    {
+      "name": "peek_left_01",
+      "category": "05_playful",
+      "file": "05_playful/peek_left_01.png",
+      "width": 163,
+      "height": 151,
+      "source_label": "Peek L01"
+    },
+    {
+      "name": "peek_right_01",
+      "category": "05_playful",
+      "file": "05_playful/peek_right_01.png",
+      "width": 163,
+      "height": 151,
+      "source_label": "Peek R01"
+    },
+    {
+      "name": "think_left_01",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/think_left_01.png",
+      "width": 128,
+      "height": 170,
+      "source_label": "Think L01"
+    },
+    {
+      "name": "think_left_02",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/think_left_02.png",
+      "width": 155,
+      "height": 170,
+      "source_label": "Think L02"
+    },
+    {
+      "name": "think_right_01",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/think_right_01.png",
+      "width": 165,
+      "height": 170,
+      "source_label": "Think R01"
+    },
+    {
+      "name": "think_right_02",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/think_right_02.png",
+      "width": 132,
+      "height": 170,
+      "source_label": "Think R02"
+    },
+    {
+      "name": "excited_left_01",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/excited_left_01.png",
+      "width": 131,
+      "height": 170,
+      "source_label": "Excited L01"
+    },
+    {
+      "name": "excited_left_03",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/excited_left_03.png",
+      "width": 148,
+      "height": 170,
+      "source_label": "Excited L03"
+    },
+    {
+      "name": "excited_right_01",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/excited_right_01.png",
+      "width": 135,
+      "height": 170,
+      "source_label": "Excited R01"
+    },
+    {
+      "name": "excited_right_03",
+      "category": "03_chat_interaction",
+      "file": "03_chat_interaction/excited_right_03.png",
+      "width": 138,
+      "height": 170,
+      "source_label": "Excited R03"
+    },
+    {
+      "name": "pout_01",
+      "category": "04_emotions",
+      "file": "04_emotions/pout_01.png",
+      "width": 127,
+      "height": 165,
+      "source_label": "Pout L01"
+    },
+    {
+      "name": "pout_02",
+      "category": "04_emotions",
+      "file": "04_emotions/pout_02.png",
+      "width": 130,
+      "height": 165,
+      "source_label": "Pout R01"
+    },
+    {
+      "name": "pout_03",
+      "category": "04_emotions",
+      "file": "04_emotions/pout_03.png",
+      "width": 130,
+      "height": 165,
+      "source_label": "Pout R01 (as labeled)"
+    },
+    {
+      "name": "shock_01",
+      "category": "04_emotions",
+      "file": "04_emotions/shock_01.png",
+      "width": 133,
+      "height": 165,
+      "source_label": "Shock L01"
+    },
+    {
+      "name": "shock_02",
+      "category": "04_emotions",
+      "file": "04_emotions/shock_02.png",
+      "width": 132,
+      "height": 165,
+      "source_label": "Shock R01"
+    },
+    {
+      "name": "shock_03",
+      "category": "04_emotions",
+      "file": "04_emotions/shock_03.png",
+      "width": 129,
+      "height": 165,
+      "source_label": "Shock L01 (repeat label)"
+    },
+    {
+      "name": "shock_04",
+      "category": "04_emotions",
+      "file": "04_emotions/shock_04.png",
+      "width": 130,
+      "height": 165,
+      "source_label": "Shock R01 (repeat label)"
+    }
+  ]
+}
