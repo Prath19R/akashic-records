@@ -147,6 +147,7 @@ pub fn AthenaWidget() -> impl IntoView {
         let mut pos_bottom: f64 = 20.0;
         let floor_bottom: f64 = 20.0;
         let left_boundary: f64 = 24.0;
+        let mut chat_anchor_bottom: f64 = 20.0;
 
         let mut state_time: f64 = 0.0;
         let mut anim_accum_ms: f64 = 0.0;
@@ -242,6 +243,11 @@ pub fn AthenaWidget() -> impl IntoView {
                 state = CharacterState::ChatStandby;
                 state_time = 0.0;
                 anim_accum_ms = 0.0;
+                // Preserve floating altitude if clicked in mid-air (clamped so thought bubble fits on screen)
+                let max_dock_bottom = (win_h - 540.0 - 140.0).max(floor_bottom);
+                chat_anchor_bottom = pos_bottom.clamp(floor_bottom, max_dock_bottom);
+                pos_bottom = chat_anchor_bottom;
+
                 set_current_sprite.set(POSE_STANDBY);
                 set_bubble_text.set("Ask me anything!");
                 set_bubble_icon.set("✨");
@@ -249,12 +255,22 @@ pub fn AthenaWidget() -> impl IntoView {
                 set_rotation.set(0.0);
                 set_scale.set(1.0);
             } else if !open && was_open {
-                state = CharacterState::Running;
+                // If closed while elevated, continue floating down with parachute
+                if pos_bottom > floor_bottom + 15.0 {
+                    state = CharacterState::Dropped;
+                    set_current_sprite.set(if direction == Direction::Left { DROPPED_LEFT } else { DROPPED_RIGHT });
+                    set_bubble_text.set("Floating... ✨");
+                    set_bubble_icon.set("🪂");
+                    set_bubble_dot.set("#34d399");
+                } else {
+                    pos_bottom = floor_bottom;
+                    state = CharacterState::Running;
+                    set_bubble_text.set("Exploring...");
+                    set_bubble_icon.set("🌿");
+                }
                 state_time = 0.0;
                 anim_accum_ms = 0.0;
                 set_rotation.set(0.0);
-                set_bubble_text.set("Exploring...");
-                set_bubble_icon.set("🌿");
             }
             was_open = open;
 
@@ -438,7 +454,8 @@ pub fn AthenaWidget() -> impl IntoView {
 
                 // 7. Thinking (Slow 500ms pose loop)
                 CharacterState::Thinking => {
-                    pos_bottom = floor_bottom;
+                    let float_y = (state_time / 1200.0).sin() * 1.5;
+                    pos_bottom = chat_anchor_bottom + float_y;
                     set_rotation.set(0.0);
                     if anim_accum_ms >= 500.0 {
                         anim_accum_ms = 0.0;
@@ -454,9 +471,10 @@ pub fn AthenaWidget() -> impl IntoView {
                     set_bubble_dot.set("#60a5fa");
                 }
 
-                // 9. Answering / Excited (220ms pose loop)
+                // 8. Answering / Excited (220ms pose loop)
                 CharacterState::Answering => {
-                    pos_bottom = floor_bottom;
+                    let float_y = (state_time / 1200.0).sin() * 1.5;
+                    pos_bottom = chat_anchor_bottom + float_y;
                     set_rotation.set(0.0);
                     if anim_accum_ms >= 220.0 {
                         anim_accum_ms = 0.0;
@@ -472,13 +490,19 @@ pub fn AthenaWidget() -> impl IntoView {
                     set_bubble_dot.set("#fbbf24");
                 }
 
-                // 10. Standby / Neutral Standing (rising_04 with subtle procedural float)
-                CharacterState::Standby | CharacterState::ChatStandby => {
+                // 9. Standby / Neutral Standing (rising_04 with subtle procedural float)
+                CharacterState::Standby => {
                     set_current_sprite.set(POSE_STANDBY);
                     set_rotation.set(0.0);
-                    // Subtle float: ~1.5px vertical breath cycle
                     let float_y = (state_time / 1200.0).sin() * 1.5;
                     pos_bottom = floor_bottom + float_y;
+                }
+
+                CharacterState::ChatStandby => {
+                    set_current_sprite.set(POSE_STANDBY);
+                    set_rotation.set(0.0);
+                    let float_y = (state_time / 1200.0).sin() * 1.5;
+                    pos_bottom = chat_anchor_bottom + float_y;
                 }
 
                 CharacterState::Dragging => {}
@@ -591,7 +615,7 @@ pub fn AthenaWidget() -> impl IntoView {
         let modal_left = ideal_left.clamp(12.0, (win_w - modal_width - 12.0).max(12.0));
 
         // Position bottom of thought bubble directly above Nahida's head (+ gap for connector dots)
-        let modal_bottom = bottom.get() + 116.0;
+        let modal_bottom = (bottom.get() + 116.0).min(win_h - modal_height - 16.0).max(16.0);
 
         // Tail connector offset (points directly down towards Athena)
         let tail_x = (athena_center_x - modal_left).clamp(36.0, modal_width - 36.0);
@@ -690,7 +714,7 @@ pub fn AthenaWidget() -> impl IntoView {
                 // Floating Speech Bubble (Fades when thought bubble opens)
                 <div
                     class=move || format!(
-                        "relative mb-1 px-2.5 py-1 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-zinc-100 text-[11px] font-mono shadow-xl flex items-center gap-1.5 whitespace-nowrap transition-opacity duration-200 {}",
+                        "relative mb-3.5 px-2.5 py-1 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-zinc-100 text-[11px] font-mono shadow-xl flex items-center gap-1.5 whitespace-nowrap transition-opacity duration-200 {}",
                         if is_open.get() { "opacity-0 pointer-events-none" } else { "opacity-100" }
                     )
                 >
@@ -703,7 +727,7 @@ pub fn AthenaWidget() -> impl IntoView {
                 </div>
 
                 // Fixed-Height Stage Box (96px height, bottom-center foot anchor prevents all jumping)
-                <div class="h-24 w-28 flex items-end justify-center pointer-events-none select-none">
+                <div class="h-24 w-32 flex items-end justify-center pointer-events-none select-none">
                     <img
                         src=move || current_sprite.get()
                         alt="Nahida Chibi Companion"
