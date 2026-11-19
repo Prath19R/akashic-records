@@ -2,34 +2,27 @@ use leptos::prelude::*;
 use gloo_timers::callback::Interval;
 use wasm_bindgen::JsCast;
 
-const SPRITES_RUN: [&str; 5] = [
-    "assets/chibi/01_movement/nahida_run_01.png?v=3",
-    "assets/chibi/01_movement/nahida_run_02.png?v=3",
-    "assets/chibi/01_movement/nahida_run_03.png?v=3",
-    "assets/chibi/01_movement/nahida_run_04.png?v=3",
-    "assets/chibi/01_movement/nahida_run_05.png?v=3",
+const SPRITES_WALK: [&str; 4] = [
+    "assets/chibi/01_movement/nahida_walk_left_01.png?v=4",
+    "assets/chibi/01_movement/nahida_walk_left_02.png?v=4",
+    "assets/chibi/01_movement/nahida_walk_left_03.png?v=4",
+    "assets/chibi/01_movement/nahida_walk_left_02.png?v=4",
 ];
 
-const SPRITES_WALK_LEFT: [&str; 3] = [
-    "assets/chibi/01_movement/nahida_walk_left_01.png?v=3",
-    "assets/chibi/01_movement/nahida_walk_left_02.png?v=3",
-    "assets/chibi/01_movement/nahida_walk_left_03.png?v=3",
-];
+const SPRITE_IMPACT: &str = "assets/chibi/02_physics_events/nahida_impact_01.png?v=4";
+const SPRITE_RECOVER: &str = "assets/chibi/02_physics_events/nahida_recover_01.png?v=4";
 
-const SPRITE_IMPACT: &str = "assets/chibi/02_physics_events/nahida_impact_01.png?v=3";
-const SPRITE_RECOVER: &str = "assets/chibi/02_physics_events/nahida_recover_01.png?v=3";
-
-const SPRITE_THINK: &str = "assets/chibi/03_chat_interaction/nahida_think_pose.png?v=3";
-const SPRITE_PONDER: &str = "assets/chibi/03_chat_interaction/nahida_ponder_pose.png?v=3";
-const SPRITE_ASK_INVITE: &str = "assets/chibi/03_chat_interaction/nahida_ask_invite.png?v=3";
-const SPRITE_LOADING: &str = "assets/chibi/03_chat_interaction/nahida_loading_01.png?v=3";
-const SPRITE_EXCITED: &str = "assets/chibi/03_chat_interaction/nahida_excited_01.png?v=3";
-const SPRITE_ANSWERING: &str = "assets/chibi/03_chat_interaction/nahida_answering_01.png?v=3";
+const SPRITE_THINK: &str = "assets/chibi/03_chat_interaction/nahida_think_pose.png?v=4";
+const SPRITE_PONDER: &str = "assets/chibi/03_chat_interaction/nahida_ponder_pose.png?v=4";
+const SPRITE_ASK_INVITE: &str = "assets/chibi/03_chat_interaction/nahida_ask_invite.png?v=4";
+const SPRITE_LOADING: &str = "assets/chibi/03_chat_interaction/nahida_loading_01.png?v=4";
+const SPRITE_EXCITED: &str = "assets/chibi/03_chat_interaction/nahida_excited_01.png?v=4";
+const SPRITE_ANSWERING: &str = "assets/chibi/03_chat_interaction/nahida_answering_01.png?v=4";
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum CompanionState {
     Spawning,          // 0: Spawns at bottom-left
-    PatrolRight,       // 1: Runs forward (facing right) along bottom towards right edge
+    PatrolRight,       // 1: Walks forward (facing right) along bottom towards right edge
     EdgeContact,       // 2: Hits right edge, recoils slightly
     Recovery,          // 3: Recovers, shakes head, turns left
     PatrolLeft,        // 4: Walks forward (facing left) along bottom towards left edge
@@ -49,7 +42,7 @@ pub fn AthenaWidget() -> impl IntoView {
     let (scale, set_scale) = signal(0.0);
     let (opacity, set_opacity) = signal(1.0);
     let (flip, set_flip) = signal(-1.0); // -1.0 flips native-left sprites to face right
-    let (current_sprite, set_current_sprite) = signal(SPRITES_RUN[0]);
+    let (current_sprite, set_current_sprite) = signal(SPRITES_WALK[0]);
     let (bubble_text, set_bubble_text) = signal("Awakening...");
     let (bubble_icon, set_bubble_icon) = signal("🌱");
     let (bubble_dot, set_bubble_dot) = signal("#34d399");
@@ -68,7 +61,7 @@ pub fn AthenaWidget() -> impl IntoView {
     Effect::new(move |_| {
         let mut state = CompanionState::Spawning;
         let mut pos_x: f64 = 24.0;
-        let pos_bottom: f64 = 20.0;
+        let mut pos_bottom: f64 = 20.0;
         let left_edge: f64 = 24.0;
         let mut state_time: f64 = 0.0;
         let mut anim_tick: usize = 0;
@@ -152,19 +145,24 @@ pub fn AthenaWidget() -> impl IntoView {
                     }
                 }
 
-                // State 1: Running Left-to-Right along Bottom (Facing Right)
+                // State 1: Walking Left-to-Right along Bottom (Facing Right, active steps with natural bobbing)
                 CompanionState::PatrolRight => {
-                    pos_x += 2.6; // Steady running speed
+                    pos_x += 1.8; // Steady walking speed
                     set_scale.set(1.0);
                     set_opacity.set(1.0);
-                    set_flip.set(-1.0); // -1.0 makes native-left sprites face forward to the right
+                    set_flip.set(-1.0); // -1.0 faces forward to the right
 
-                    // 12fps running cycle
-                    let frame = (anim_tick / 5) % SPRITES_RUN.len();
-                    set_current_sprite.set(SPRITES_RUN[frame]);
+                    // 10fps walk cycle: 01 -> 02 -> 03 -> 02
+                    let frame_idx = (anim_tick / 6) % SPRITES_WALK.len();
+                    set_current_sprite.set(SPRITES_WALK[frame_idx]);
+
+                    // Subtle natural footstep bob (2.0px lift during passing step)
+                    let bob = if frame_idx % 2 == 1 { 2.0 } else { 0.0 };
+                    pos_bottom = 20.0 + bob;
 
                     if pos_x >= right_edge {
                         pos_x = right_edge;
+                        pos_bottom = 20.0;
                         state = CompanionState::EdgeContact;
                         state_time = 0.0;
                         set_current_sprite.set(SPRITE_IMPACT);
@@ -176,6 +174,7 @@ pub fn AthenaWidget() -> impl IntoView {
 
                 // State 2: Edge Impact Bounce at Right Edge
                 CompanionState::EdgeContact => {
+                    pos_bottom = 20.0;
                     let bounce = (state_time / 300.0).min(1.0) * std::f64::consts::PI;
                     pos_x = right_edge - bounce.sin() * 7.0;
 
@@ -190,6 +189,7 @@ pub fn AthenaWidget() -> impl IntoView {
 
                 // State 3: Recovery & Turn Around
                 CompanionState::Recovery => {
+                    pos_bottom = 20.0;
                     if state_time < 350.0 {
                         set_current_sprite.set(SPRITE_RECOVER);
                         set_flip.set(-1.0);
@@ -201,24 +201,29 @@ pub fn AthenaWidget() -> impl IntoView {
                     } else {
                         state = CompanionState::PatrolLeft;
                         state_time = 0.0;
-                        set_flip.set(1.0); // 1.0 makes native-left sprites face forward to the left
+                        set_flip.set(1.0); // 1.0 faces forward to the left
                         set_bubble_text.set("Exploring...");
                         set_bubble_icon.set("🌿");
                         set_bubble_dot.set("#10b981");
                     }
                 }
 
-                // State 4: Walking Right-to-Left along Bottom (Facing Left)
+                // State 4: Walking Right-to-Left along Bottom (Facing Left, identical active steps)
                 CompanionState::PatrolLeft => {
-                    pos_x -= 1.8; // Steady, calm walk speed
+                    pos_x -= 1.8; // Steady walking speed
                     set_flip.set(1.0); // 1.0 faces forward to the left
 
-                    // 10fps walk cycle
-                    let frame = (anim_tick / 6) % SPRITES_WALK_LEFT.len();
-                    set_current_sprite.set(SPRITES_WALK_LEFT[frame]);
+                    // 10fps walk cycle: 01 -> 02 -> 03 -> 02
+                    let frame_idx = (anim_tick / 6) % SPRITES_WALK.len();
+                    set_current_sprite.set(SPRITES_WALK[frame_idx]);
+
+                    // Subtle natural footstep bob (2.0px lift during passing step)
+                    let bob = if frame_idx % 2 == 1 { 2.0 } else { 0.0 };
+                    pos_bottom = 20.0 + bob;
 
                     if pos_x <= left_edge {
                         pos_x = left_edge;
+                        pos_bottom = 20.0;
                         state = CompanionState::LeftTurn;
                         state_time = 0.0;
                         set_bubble_text.set("Turning... 🍃");
@@ -228,6 +233,7 @@ pub fn AthenaWidget() -> impl IntoView {
 
                 // State 5: Turn Around at Left Edge
                 CompanionState::LeftTurn => {
+                    pos_bottom = 20.0;
                     pos_x = left_edge;
                     if state_time < 500.0 {
                         set_current_sprite.set(SPRITE_PONDER);
@@ -250,6 +256,7 @@ pub fn AthenaWidget() -> impl IntoView {
                 CompanionState::InterruptedChat => {
                     let target_x = (win_w - 490.0).max(20.0);
                     pos_x += (target_x - pos_x) * 0.18;
+                    pos_bottom = 20.0;
                     set_flip.set(1.0);
                     set_opacity.set(1.0);
 
@@ -261,6 +268,7 @@ pub fn AthenaWidget() -> impl IntoView {
                 CompanionState::Thinking => {
                     let target_x = (win_w - 490.0).max(20.0);
                     pos_x += (target_x - pos_x) * 0.18;
+                    pos_bottom = 20.0;
 
                     let frame = (anim_tick / 8) % 2;
                     set_current_sprite.set(if frame == 0 { SPRITE_LOADING } else { SPRITE_THINK });
@@ -273,6 +281,7 @@ pub fn AthenaWidget() -> impl IntoView {
                 CompanionState::Answering => {
                     let target_x = (win_w - 490.0).max(20.0);
                     pos_x += (target_x - pos_x) * 0.18;
+                    pos_bottom = 20.0;
 
                     if state_time < 1000.0 {
                         set_current_sprite.set(SPRITE_EXCITED);
