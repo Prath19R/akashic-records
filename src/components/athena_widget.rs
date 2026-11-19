@@ -314,41 +314,101 @@ pub fn AthenaWidget() -> impl IntoView {
         set_is_open.update(|v| *v = !*v);
     };
 
+    let modal_layout = move || {
+        let (win_w, win_h) = if let Some(w) = web_sys::window() {
+            let width = w.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(1200.0);
+            let height = w.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+            (width, height)
+        } else {
+            (1200.0, 800.0)
+        };
+
+        // Thought bubble size: 460px wide, 540px high on desktop (readable size, not too big, not too small)
+        let modal_width: f64 = 460.0_f64.min(win_w - 24.0);
+        let modal_height: f64 = 540.0_f64.min(win_h - 165.0).max(380.0);
+
+        // Center thought bubble horizontally over Athena's current X position
+        let athena_center_x = x.get() + 40.0;
+        let ideal_left = athena_center_x - (modal_width / 2.0);
+        let modal_left = ideal_left.clamp(12.0, (win_w - modal_width - 12.0).max(12.0));
+
+        // Position bottom of thought bubble directly above Athena (Athena is at bottom.get() + 96px height)
+        let modal_bottom = bottom.get() + 116.0;
+
+        // Tail connector offset (points directly down towards Athena)
+        let tail_x = (athena_center_x - modal_left).clamp(36.0, modal_width - 36.0);
+
+        (modal_left, modal_bottom, modal_width, modal_height, tail_x)
+    };
+
     view! {
         <div class="font-sans">
-            // Expanded Chat Modal / Slide-up Box
-            <div class=move || format!(
-                "fixed bottom-24 right-4 sm:right-6 z-50 transition-all duration-300 ease-out origin-bottom-right shadow-2xl rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 {}",
-                if is_open.get() {
-                    "w-[90vw] sm:w-[420px] h-[580px] opacity-100 scale-100 pointer-events-auto"
-                } else {
-                    "w-[90vw] sm:w-[420px] h-0 opacity-0 scale-95 pointer-events-none"
-                }
-            )>
-                <div class="h-11 bg-zinc-900 border-b border-zinc-800 px-3.5 flex items-center justify-between text-xs font-mono">
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm">"🏛️"</span>
-                        <span class="font-semibold text-zinc-200">"Athena AI Guide"</span>
-                        <span class="text-[10px] text-zinc-500 font-mono">"(Rust WASM)"</span>
-                    </div>
-                    <button
-                        type="button"
-                        on:click=move |_| set_is_open.set(false)
-                        class="p-1 rounded text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
-                        title="Close Chat"
+            // Thought Bubble Chat Modal (Anchored directly above Athena)
+            {move || {
+                let (m_left, m_bottom, m_width, m_height, tail_x) = modal_layout();
+                let open = is_open.get();
+
+                view! {
+                    <div
+                        style=format!(
+                            "position: fixed; left: {}px; bottom: {}px; width: {}px; height: {}px; z-index: 9995; transform-origin: {}px bottom; transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease-out; opacity: {}; transform: scale({}); pointer-events: {};",
+                            m_left,
+                            m_bottom,
+                            m_width,
+                            m_height,
+                            tail_x,
+                            if open { "1" } else { "0" },
+                            if open { "1" } else { "0.85" },
+                            if open { "auto" } else { "none" },
+                        )
+                        class="flex flex-col"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-                <iframe
-                    src=athena_url()
-                    class="w-full h-[calc(100%-44px)] border-0 bg-[#09090b]"
-                    title="Athena AI Portfolio Assistant"
-                ></iframe>
-            </div>
+                        // Main Thought Bubble Box
+                        <div class="w-full h-full flex flex-col rounded-[32px] border-2 border-zinc-700/80 bg-zinc-950/98 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_35px_rgba(52,211,153,0.18)] overflow-hidden">
+                            // Thought Bubble Header
+                            <div class="h-12 bg-zinc-900/90 border-b border-zinc-800/80 px-4 flex items-center justify-between text-xs font-mono select-none shrink-0">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="text-base">"💭"</span>
+                                    <div>
+                                        <span class="font-bold text-zinc-100 text-sm">"Athena's Mind"</span>
+                                        <span class="ml-2 text-[11px] text-emerald-400 font-mono">"AI Guide"</span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    on:click=move |_| set_is_open.set(false)
+                                    class="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+                                    title="Close Chat"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            // Chat Iframe
+                            <iframe
+                                src=athena_url()
+                                class="w-full flex-1 border-0 bg-[#09090b]"
+                                title="Athena AI Portfolio Assistant"
+                            ></iframe>
+                        </div>
+
+                        // Thought Bubble Trail (Two descending circles pointing down towards Athena)
+                        <div
+                            style=format!(
+                                "position: absolute; left: {}px; top: 100%; transform: translateX(-50%); pointer-events: none; margin-top: 4px;",
+                                tail_x
+                            )
+                            class="flex flex-col items-center gap-1.5"
+                        >
+                            <div class="w-4 h-4 rounded-full bg-zinc-950 border-2 border-zinc-700 shadow-md"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-zinc-950 border-2 border-zinc-700 shadow-sm"></div>
+                        </div>
+                    </div>
+                }
+            }}
 
             // Pure Rust Nahida Companion (Singleton: exactly one DOM instance)
             <div
@@ -362,9 +422,12 @@ pub fn AthenaWidget() -> impl IntoView {
                     opacity.get()
                 )
             >
-                // Floating Speech Bubble
+                // Floating Speech Bubble (Fades when thought bubble opens)
                 <div
-                    class="relative mb-1 px-2.5 py-1 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-zinc-100 text-[11px] font-mono shadow-xl flex items-center gap-1.5 whitespace-nowrap"
+                    class=move || format!(
+                        "relative mb-1 px-2.5 py-1 rounded-xl bg-zinc-950/90 border border-zinc-700/80 text-zinc-100 text-[11px] font-mono shadow-xl flex items-center gap-1.5 whitespace-nowrap transition-opacity duration-200 {}",
+                        if is_open.get() { "opacity-0 pointer-events-none" } else { "opacity-100" }
+                    )
                 >
                     <span class="text-xs">{move || bubble_icon.get()}</span>
                     <span>{move || bubble_text.get()}</span>
