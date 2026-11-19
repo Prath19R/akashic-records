@@ -26,3 +26,205 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
 }
+
+/* Nahida Chibi Roaming Animation */
+@keyframes nahidaMoveX {
+  0% {
+    left: 20px;
+  }
+  40% {
+    left: calc(100vw - 110px);
+  }
+  41% {
+    left: calc(100vw - 92px);
+  }
+  42%, 48% {
+    left: calc(100vw - 105px);
+  }
+  50% {
+    left: calc(100vw - 110px);
+  }
+  90% {
+    left: 20px;
+  }
+  91% {
+    left: 5px;
+  }
+  92%, 98% {
+    left: 20px;
+  }
+  100% {
+    left: 20px;
+  }
+}
+
+@keyframes nahidaSpriteAction {
+  /* Walking Right */
+  0% {
+    transform: scaleX(1) translateY(0);
+  }
+  4% {
+    transform: scaleX(1) translateY(-6px) rotate(2deg);
+  }
+  8% {
+    transform: scaleX(1) translateY(0) rotate(-2deg);
+  }
+  12% {
+    transform: scaleX(1) translateY(-6px) rotate(2deg);
+  }
+  16% {
+    transform: scaleX(1) translateY(0) rotate(-2deg);
+  }
+  20% {
+    transform: scaleX(1) translateY(-6px) rotate(2deg);
+  }
+  24% {
+    transform: scaleX(1) translateY(0) rotate(-2deg);
+  }
+  28% {
+    transform: scaleX(1) translateY(-6px) rotate(2deg);
+  }
+  32% {
+    transform: scaleX(1) translateY(0) rotate(-2deg);
+  }
+  36% {
+    transform: scaleX(1) translateY(-6px) rotate(2deg);
+  }
+  40% {
+    transform: scaleX(1) translateY(0) rotate(0deg);
+  }
+
+  /* Right Wall Collision & Fall */
+  41% {
+    transform: scaleX(1) translateY(-14px) rotate(-16deg);
+  }
+  42.5% {
+    transform: scaleX(1) translateY(18px) rotate(82deg);
+  }
+  46.5% {
+    transform: scaleX(1) translateY(18px) rotate(82deg);
+  }
+  48.5% {
+    transform: scaleX(1) translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: scaleX(-1) translateY(0) rotate(0deg);
+  }
+
+  /* Walking Left */
+  54% {
+    transform: scaleX(-1) translateY(-6px) rotate(2deg);
+  }
+  58% {
+    transform: scaleX(-1) translateY(0) rotate(-2deg);
+  }
+  62% {
+    transform: scaleX(-1) translateY(-6px) rotate(2deg);
+  }
+  66% {
+    transform: scaleX(-1) translateY(0) rotate(-2deg);
+  }
+  70% {
+    transform: scaleX(-1) translateY(-6px) rotate(2deg);
+  }
+  74% {
+    transform: scaleX(-1) translateY(0) rotate(-2deg);
+  }
+  78% {
+    transform: scaleX(-1) translateY(-6px) rotate(2deg);
+  }
+  82% {
+    transform: scaleX(-1) translateY(0) rotate(-2deg);
+  }
+  86% {
+    transform: scaleX(-1) translateY(-6px) rotate(2deg);
+  }
+  90% {
+    transform: scaleX(-1) translateY(0) rotate(0deg);
+  }
+
+  /* Left Wall Collision & Fall */
+  91% {
+    transform: scaleX(-1) translateY(-14px) rotate(-16deg);
+  }
+  92.5% {
+    transform: scaleX(-1) translateY(18px) rotate(-82deg);
+  }
+  96.5% {
+    transform: scaleX(-1) translateY(18px) rotate(-82deg);
+  }
+  98.5% {
+    transform: scaleX(-1) translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: scaleX(1) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes bubbleWalkingSync {
+  0%, 40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  41%, 48% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  49%, 90% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  91%, 98% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  99%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bubbleBonkSync {
+  0%, 40% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  41%, 48% {
+    opacity: 1;
+    transform: scale(1.1) translateY(-4px);
+  }
+  49%, 90% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  91%, 98% {
+    opacity: 1;
+    transform: scale(1.1) translateY(-4px);
+  }
+  99%, 100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.nahida-mover {
+  position: fixed;
+  bottom: 12px;
+  z-index: 50;
+  animation: nahidaMoveX 22s linear infinite;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nahida-sprite {
+  animation: nahidaSpriteAction 22s linear infinite;
+  transform-origin: bottom center;
+}
+
+.nahida-bubble-walking {
+  animation: bubbleWalkingSync 22s linear infinite;
+}
+
+.nahida-bubble-bonk {
+  animation: bubbleBonkSync 22s linear infinite;
+}
