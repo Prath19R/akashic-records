@@ -154,16 +154,16 @@ pub fn AthenaWidget() -> impl IntoView {
                     }
                 }
 
-                // State 1: Walking Left-to-Right along Bottom (Facing Right, silky smooth, no text bobbing)
+                // State 1: Walking Left-to-Right along Bottom (Facing Right, calm slow stroll)
                 CompanionState::PatrolRight => {
                     moving_right = true;
-                    pos_x += 1.8; // Steady walking speed
+                    pos_x += 1.1; // Slower, relaxed walking speed
                     set_scale.set(1.0);
                     set_opacity.set(1.0);
                     set_flip.set(-1.0); // -1.0 faces forward to the right
 
-                    // 10fps walk cycle: 01 -> 02 -> 03 -> 02
-                    let frame_idx = (anim_tick / 6) % SPRITES_WALK.len();
+                    // Gentle walk cycle: 01 -> 02 -> 03 -> 02
+                    let frame_idx = (anim_tick / 8) % SPRITES_WALK.len();
                     set_current_sprite.set(SPRITES_WALK[frame_idx]);
 
                     if pos_x >= right_edge {
@@ -212,14 +212,14 @@ pub fn AthenaWidget() -> impl IntoView {
                     }
                 }
 
-                // State 4: Walking Right-to-Left along Bottom (Facing Left, silky smooth, no text bobbing)
+                // State 4: Walking Right-to-Left along Bottom (Facing Left, calm slow stroll)
                 CompanionState::PatrolLeft => {
                     moving_right = false;
-                    pos_x -= 1.8; // Steady walking speed
+                    pos_x -= 1.1; // Slower, relaxed walking speed
                     set_flip.set(1.0); // 1.0 faces forward to the left
 
-                    // 10fps walk cycle: 01 -> 02 -> 03 -> 02
-                    let frame_idx = (anim_tick / 6) % SPRITES_WALK.len();
+                    // Gentle walk cycle: 01 -> 02 -> 03 -> 02
+                    let frame_idx = (anim_tick / 8) % SPRITES_WALK.len();
                     set_current_sprite.set(SPRITES_WALK[frame_idx]);
 
                     if pos_x <= left_edge {
@@ -374,11 +374,11 @@ pub fn AthenaWidget() -> impl IntoView {
                     ></span>
                 </div>
 
-                // Animated Nahida Sprite Frame (100% visible on bottom, fixed height to prevent growing/shrinking)
+                // Animated Nahida Sprite Frame (Bigger & clearly visible on bottom, fixed height to prevent growing/shrinking)
                 <img
                     src=move || current_sprite.get()
                     alt="Nahida Chibi Companion"
-                    class="h-20 w-auto drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] select-none pointer-events-none"
+                    class="h-24 w-auto drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] select-none pointer-events-none"
                     style=move || format!(
                         "transform: scale({}) scaleX({}); transform-origin: bottom center;",
                         scale.get(),
