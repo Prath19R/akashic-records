@@ -1,0 +1,7 @@
+[build]
+target = "index.html"
+dist = "dist"
+public_url = "/akashic-records/"
+
+[watch]
+ignore = ["style/output.css"]

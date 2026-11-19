@@ -1,0 +1,6 @@
+/target
+/dist
+/node_modules
+style/output.css
+.env
+.DS_Store
