@@ -107,6 +107,19 @@ pub fn Contact() -> impl IntoView {
                 // Left info
                 <div class="md:col-span-2 space-y-4 text-xs font-mono">
                     <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl space-y-3">
+                        <span class="text-zinc-500 uppercase tracking-wider block text-[10px]">"Direct Phone / WhatsApp"</span>
+                        <a
+                            href="tel:+918319057558"
+                            class="text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors block font-mono"
+                        >
+                            "+91 8319057558"
+                        </a>
+                        <p class="text-zinc-400 font-sans text-xs">
+                            "Available for direct calls, SMS, and WhatsApp."
+                        </p>
+                    </div>
+
+                    <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl space-y-3">
                         <span class="text-zinc-500 uppercase tracking-wider block text-[10px]">"Direct Email"</span>
                         <a
                             href="mailto:prathmeshranadive@gmail.com"

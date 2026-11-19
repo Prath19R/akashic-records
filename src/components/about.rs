@@ -48,7 +48,8 @@ pub fn About() -> impl IntoView {
                         </div>
                         <div class="bg-zinc-900/60 border border-zinc-800/80 p-3.5 rounded-xl">
                             <span class="text-zinc-500 uppercase tracking-wider block mb-1 text-[10px]">"Contact"</span>
-                            <span class="text-zinc-200 font-medium">"prathmeshranadive@gmail.com"</span>
+                            <span class="text-zinc-200 font-medium block">"prathmeshranadive@gmail.com"</span>
+                            <span class="text-emerald-400 font-mono text-xs block mt-0.5 font-medium">"+91 8319057558"</span>
                         </div>
                     </div>
                 </div>
