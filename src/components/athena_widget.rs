@@ -78,8 +78,6 @@ const EXCITED_RIGHT: [&str; 2] = [
 // 05 Playful Actions
 const HOP_LEFT: &str = "assets/chibi/05_playful/hop_left_01.png";
 const HOP_RIGHT: &str = "assets/chibi/05_playful/hop_right_01.png";
-const TWIRL_LEFT: &str = "assets/chibi/05_playful/twirl_left_01.png";
-const TWIRL_RIGHT: &str = "assets/chibi/05_playful/twirl_right_01.png";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHARACTER STATE MACHINE
@@ -104,7 +102,6 @@ pub enum CharacterState {
     Answering,         // AI excited burst & answering pose
     ChatStandby,       // Idle docked beside open thought bubble
     PlayfulHop,        // Spontaneous joyful hop
-    PlayfulTwirl,      // Spontaneous 360-degree spin
 }
 
 #[component]
@@ -155,8 +152,6 @@ pub fn AthenaWidget() -> impl IntoView {
         let mut anim_accum_ms: f64 = 0.0;
         let mut current_frame_idx: usize = 0;
         let mut was_open = false;
-
-        let mut next_playful_tick: f64 = 8000.0; // Trigger playful events periodically
 
         let perf = web_sys::window().and_then(|w| w.performance());
         let mut last_now = perf.as_ref().map(|p| p.now()).unwrap_or(0.0);
@@ -362,25 +357,6 @@ pub fn AthenaWidget() -> impl IntoView {
                             }
                         }
                     }
-
-                    // Periodic spontaneous playful event (Hop or Twirl)
-                    if state_time >= next_playful_tick {
-                        state_time = 0.0;
-                        next_playful_tick = 12000.0; // Next check in 12s
-                        if (pos_x as usize) % 2 == 0 {
-                            state = CharacterState::PlayfulHop;
-                            anim_accum_ms = 0.0;
-                            set_current_sprite.set(if direction == Direction::Left { HOP_LEFT } else { HOP_RIGHT });
-                            set_bubble_text.set("Hop! ✨");
-                            set_bubble_icon.set("✨");
-                        } else {
-                            state = CharacterState::PlayfulTwirl;
-                            anim_accum_ms = 0.0;
-                            set_current_sprite.set(if direction == Direction::Left { TWIRL_LEFT } else { TWIRL_RIGHT });
-                            set_bubble_text.set("Spin! 🌸");
-                            set_bubble_icon.set("🌸");
-                        }
-                    }
                 }
 
                 // 3. Dropped / Parachute Float (Downwards drift with gentle sine sway)
@@ -460,22 +436,7 @@ pub fn AthenaWidget() -> impl IntoView {
                     }
                 }
 
-                // 7. Playful Twirl (500ms 360-degree rotation)
-                CharacterState::PlayfulTwirl => {
-                    let progress = (state_time / 500.0).min(1.0);
-                    let rot = progress * 360.0;
-                    set_rotation.set(rot);
-                    set_current_sprite.set(if direction == Direction::Left { TWIRL_LEFT } else { TWIRL_RIGHT });
-
-                    if state_time >= 500.0 {
-                        set_rotation.set(0.0);
-                        state = CharacterState::Running;
-                        state_time = 0.0;
-                        anim_accum_ms = 0.0;
-                    }
-                }
-
-                // 8. Thinking (Slow 500ms pose loop)
+                // 7. Thinking (Slow 500ms pose loop)
                 CharacterState::Thinking => {
                     pos_bottom = floor_bottom;
                     set_rotation.set(0.0);
