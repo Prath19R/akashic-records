@@ -3,21 +3,21 @@ use gloo_timers::callback::Interval;
 use wasm_bindgen::JsCast;
 
 const SPRITES_WALK: [&str; 4] = [
-    "assets/chibi/01_movement/nahida_walk_left_01.png?v=4",
-    "assets/chibi/01_movement/nahida_walk_left_02.png?v=4",
-    "assets/chibi/01_movement/nahida_walk_left_03.png?v=4",
-    "assets/chibi/01_movement/nahida_walk_left_02.png?v=4",
+    "assets/chibi/01_movement/nahida_walk_left_01.png?v=5",
+    "assets/chibi/01_movement/nahida_walk_left_02.png?v=5",
+    "assets/chibi/01_movement/nahida_walk_left_03.png?v=5",
+    "assets/chibi/01_movement/nahida_walk_left_02.png?v=5",
 ];
 
-const SPRITE_IMPACT: &str = "assets/chibi/02_physics_events/nahida_impact_01.png?v=4";
-const SPRITE_RECOVER: &str = "assets/chibi/02_physics_events/nahida_recover_01.png?v=4";
+const SPRITE_IMPACT: &str = "assets/chibi/02_physics_events/nahida_impact_01.png?v=5";
+const SPRITE_RECOVER: &str = "assets/chibi/02_physics_events/nahida_recover_01.png?v=5";
 
-const SPRITE_THINK: &str = "assets/chibi/03_chat_interaction/nahida_think_pose.png?v=4";
-const SPRITE_PONDER: &str = "assets/chibi/03_chat_interaction/nahida_ponder_pose.png?v=4";
-const SPRITE_ASK_INVITE: &str = "assets/chibi/03_chat_interaction/nahida_ask_invite.png?v=4";
-const SPRITE_LOADING: &str = "assets/chibi/03_chat_interaction/nahida_loading_01.png?v=4";
-const SPRITE_EXCITED: &str = "assets/chibi/03_chat_interaction/nahida_excited_01.png?v=4";
-const SPRITE_ANSWERING: &str = "assets/chibi/03_chat_interaction/nahida_answering_01.png?v=4";
+const SPRITE_THINK: &str = "assets/chibi/03_chat_interaction/nahida_think_pose.png?v=5";
+const SPRITE_PONDER: &str = "assets/chibi/03_chat_interaction/nahida_ponder_pose.png?v=5";
+const SPRITE_ASK_INVITE: &str = "assets/chibi/03_chat_interaction/nahida_ask_invite.png?v=5";
+const SPRITE_LOADING: &str = "assets/chibi/03_chat_interaction/nahida_loading_01.png?v=5";
+const SPRITE_EXCITED: &str = "assets/chibi/03_chat_interaction/nahida_excited_01.png?v=5";
+const SPRITE_ANSWERING: &str = "assets/chibi/03_chat_interaction/nahida_answering_01.png?v=5";
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum CompanionState {
@@ -374,11 +374,11 @@ pub fn AthenaWidget() -> impl IntoView {
                     ></span>
                 </div>
 
-                // Animated Nahida Sprite Frame (100% visible on bottom, no CSS transition lag)
+                // Animated Nahida Sprite Frame (100% visible on bottom, fixed height to prevent growing/shrinking)
                 <img
                     src=move || current_sprite.get()
                     alt="Nahida Chibi Companion"
-                    class="w-16 h-auto drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] select-none pointer-events-none"
+                    class="h-20 w-auto drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] select-none pointer-events-none"
                     style=move || format!(
                         "transform: scale({}) scaleX({}); transform-origin: bottom center;",
                         scale.get(),
