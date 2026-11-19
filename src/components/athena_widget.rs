@@ -3,28 +3,28 @@ use gloo_timers::callback::Interval;
 use wasm_bindgen::JsCast;
 
 const SPRITES_RUN: [&str; 5] = [
-    "assets/chibi/01_movement/nahida_run_01.png",
-    "assets/chibi/01_movement/nahida_run_02.png",
-    "assets/chibi/01_movement/nahida_run_03.png",
-    "assets/chibi/01_movement/nahida_run_04.png",
-    "assets/chibi/01_movement/nahida_run_05.png",
+    "assets/chibi/01_movement/nahida_run_01.png?v=3",
+    "assets/chibi/01_movement/nahida_run_02.png?v=3",
+    "assets/chibi/01_movement/nahida_run_03.png?v=3",
+    "assets/chibi/01_movement/nahida_run_04.png?v=3",
+    "assets/chibi/01_movement/nahida_run_05.png?v=3",
 ];
 
 const SPRITES_WALK_LEFT: [&str; 3] = [
-    "assets/chibi/01_movement/nahida_walk_left_01.png",
-    "assets/chibi/01_movement/nahida_walk_left_02.png",
-    "assets/chibi/01_movement/nahida_walk_left_03.png",
+    "assets/chibi/01_movement/nahida_walk_left_01.png?v=3",
+    "assets/chibi/01_movement/nahida_walk_left_02.png?v=3",
+    "assets/chibi/01_movement/nahida_walk_left_03.png?v=3",
 ];
 
-const SPRITE_IMPACT: &str = "assets/chibi/02_physics_events/nahida_impact_01.png";
-const SPRITE_RECOVER: &str = "assets/chibi/02_physics_events/nahida_recover_01.png";
+const SPRITE_IMPACT: &str = "assets/chibi/02_physics_events/nahida_impact_01.png?v=3";
+const SPRITE_RECOVER: &str = "assets/chibi/02_physics_events/nahida_recover_01.png?v=3";
 
-const SPRITE_THINK: &str = "assets/chibi/03_chat_interaction/nahida_think_pose.png";
-const SPRITE_PONDER: &str = "assets/chibi/03_chat_interaction/nahida_ponder_pose.png";
-const SPRITE_ASK_INVITE: &str = "assets/chibi/03_chat_interaction/nahida_ask_invite.png";
-const SPRITE_LOADING: &str = "assets/chibi/03_chat_interaction/nahida_loading_01.png";
-const SPRITE_EXCITED: &str = "assets/chibi/03_chat_interaction/nahida_excited_01.png";
-const SPRITE_ANSWERING: &str = "assets/chibi/03_chat_interaction/nahida_answering_01.png";
+const SPRITE_THINK: &str = "assets/chibi/03_chat_interaction/nahida_think_pose.png?v=3";
+const SPRITE_PONDER: &str = "assets/chibi/03_chat_interaction/nahida_ponder_pose.png?v=3";
+const SPRITE_ASK_INVITE: &str = "assets/chibi/03_chat_interaction/nahida_ask_invite.png?v=3";
+const SPRITE_LOADING: &str = "assets/chibi/03_chat_interaction/nahida_loading_01.png?v=3";
+const SPRITE_EXCITED: &str = "assets/chibi/03_chat_interaction/nahida_excited_01.png?v=3";
+const SPRITE_ANSWERING: &str = "assets/chibi/03_chat_interaction/nahida_answering_01.png?v=3";
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum CompanionState {
