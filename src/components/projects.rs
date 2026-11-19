@@ -11,7 +11,7 @@ pub fn Projects() -> impl IntoView {
                 <div class="text-xs font-mono text-zinc-500 uppercase tracking-widest">"// 03. Selected Works"</div>
                 <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100">"Featured Engineering Projects"</h2>
                 <p class="text-sm text-zinc-400 max-w-xl font-sans">
-                    "From Rust WASM AI edge gateways to native C financial screeners and enterprise telemetry normalizers."
+                    "From Rust WASM AI edge gateways to ultra-low latency Envoy proxies and enterprise telemetry normalizers."
                 </p>
             </div>
 

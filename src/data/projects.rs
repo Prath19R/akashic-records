@@ -25,17 +25,6 @@ pub fn get_projects() -> Vec<Project> {
             is_featured: true,
         },
         Project {
-            id: "trading-agent",
-            title: "Autonomous Quantitative Trading Agent",
-            tagline: "C-Accelerated Screener, Capital Rotation & NVIDIA NIM Reasoning",
-            description: "High-performance autonomous intraday trading engine for NSE equities. Features a compiled native C shared library for multi-factor technical scoring, dynamic rotating AI batching via NVIDIA Nemotron 30B, opportunity-cost capital rotation that protects winners while freeing stagnant capital, and automated kill-switches.",
-            tags: vec!["Python", "C", "NVIDIA NIM", "Nemotron 30B", "Docker", "SQLite", "Financial Engineering"],
-            metrics: vec!["C Native Acceleration", "4-Factor Scoring", "Capital Rotation Engine", "Docker Containerized"],
-            live_url: None,
-            github_url: Some("https://github.com/Prath19R/trading-agent"),
-            is_featured: true,
-        },
-        Project {
             id: "acdhub-envoy",
             title: "ACDHub Gateway & Envoy WASM Normalizers",
             tagline: "Ultra-Low Latency Contact Center Event Streaming (<99ms p99)",
