@@ -61,11 +61,12 @@ pub fn AthenaWidget() -> impl IntoView {
     Effect::new(move |_| {
         let mut state = CompanionState::Spawning;
         let mut pos_x: f64 = 24.0;
-        let mut pos_bottom: f64 = 20.0;
+        let pos_bottom: f64 = 20.0;
         let left_edge: f64 = 24.0;
         let mut state_time: f64 = 0.0;
         let mut anim_tick: usize = 0;
         let mut was_open = false;
+        let mut moving_right = true;
 
         let interval = Interval::new(16, move || {
             let win = match web_sys::window() {
@@ -80,7 +81,7 @@ pub fn AthenaWidget() -> impl IntoView {
 
             let open = is_open.get();
 
-            // Transition into Chat Dock when opened
+            // Transition into Chat Dock when opened (Stand and serve answer WHERE CLICKED ON)
             if open && !was_open {
                 state = CompanionState::InterruptedChat;
                 state_time = 0.0;
@@ -92,12 +93,19 @@ pub fn AthenaWidget() -> impl IntoView {
                 set_opacity.set(1.0);
                 set_flip.set(1.0);
             } else if !open && was_open {
-                // When chat is closed, turn and resume bottom patrol left
-                state = CompanionState::PatrolLeft;
+                // When chat is closed, resume from current spot in same direction
+                if moving_right {
+                    state = CompanionState::PatrolRight;
+                    set_flip.set(-1.0);
+                    set_bubble_text.set("Ask Athena!");
+                    set_bubble_icon.set("💬");
+                } else {
+                    state = CompanionState::PatrolLeft;
+                    set_flip.set(1.0);
+                    set_bubble_text.set("Exploring...");
+                    set_bubble_icon.set("🌿");
+                }
                 state_time = 0.0;
-                set_flip.set(1.0);
-                set_bubble_text.set("Exploring...");
-                set_bubble_icon.set("🌿");
             }
             was_open = open;
 
@@ -139,14 +147,16 @@ pub fn AthenaWidget() -> impl IntoView {
                     if state_time >= 250.0 {
                         state = CompanionState::PatrolRight;
                         state_time = 0.0;
+                        moving_right = true;
                         set_bubble_text.set("Ask Athena!");
                         set_bubble_icon.set("💬");
                         set_bubble_dot.set("#34d399");
                     }
                 }
 
-                // State 1: Walking Left-to-Right along Bottom (Facing Right, active steps with natural bobbing)
+                // State 1: Walking Left-to-Right along Bottom (Facing Right, silky smooth, no text bobbing)
                 CompanionState::PatrolRight => {
+                    moving_right = true;
                     pos_x += 1.8; // Steady walking speed
                     set_scale.set(1.0);
                     set_opacity.set(1.0);
@@ -156,13 +166,8 @@ pub fn AthenaWidget() -> impl IntoView {
                     let frame_idx = (anim_tick / 6) % SPRITES_WALK.len();
                     set_current_sprite.set(SPRITES_WALK[frame_idx]);
 
-                    // Subtle natural footstep bob (2.0px lift during passing step)
-                    let bob = if frame_idx % 2 == 1 { 2.0 } else { 0.0 };
-                    pos_bottom = 20.0 + bob;
-
                     if pos_x >= right_edge {
                         pos_x = right_edge;
-                        pos_bottom = 20.0;
                         state = CompanionState::EdgeContact;
                         state_time = 0.0;
                         set_current_sprite.set(SPRITE_IMPACT);
@@ -174,7 +179,6 @@ pub fn AthenaWidget() -> impl IntoView {
 
                 // State 2: Edge Impact Bounce at Right Edge
                 CompanionState::EdgeContact => {
-                    pos_bottom = 20.0;
                     let bounce = (state_time / 300.0).min(1.0) * std::f64::consts::PI;
                     pos_x = right_edge - bounce.sin() * 7.0;
 
@@ -189,7 +193,6 @@ pub fn AthenaWidget() -> impl IntoView {
 
                 // State 3: Recovery & Turn Around
                 CompanionState::Recovery => {
-                    pos_bottom = 20.0;
                     if state_time < 350.0 {
                         set_current_sprite.set(SPRITE_RECOVER);
                         set_flip.set(-1.0);
@@ -201,6 +204,7 @@ pub fn AthenaWidget() -> impl IntoView {
                     } else {
                         state = CompanionState::PatrolLeft;
                         state_time = 0.0;
+                        moving_right = false;
                         set_flip.set(1.0); // 1.0 faces forward to the left
                         set_bubble_text.set("Exploring...");
                         set_bubble_icon.set("🌿");
@@ -208,8 +212,9 @@ pub fn AthenaWidget() -> impl IntoView {
                     }
                 }
 
-                // State 4: Walking Right-to-Left along Bottom (Facing Left, identical active steps)
+                // State 4: Walking Right-to-Left along Bottom (Facing Left, silky smooth, no text bobbing)
                 CompanionState::PatrolLeft => {
+                    moving_right = false;
                     pos_x -= 1.8; // Steady walking speed
                     set_flip.set(1.0); // 1.0 faces forward to the left
 
@@ -217,13 +222,8 @@ pub fn AthenaWidget() -> impl IntoView {
                     let frame_idx = (anim_tick / 6) % SPRITES_WALK.len();
                     set_current_sprite.set(SPRITES_WALK[frame_idx]);
 
-                    // Subtle natural footstep bob (2.0px lift during passing step)
-                    let bob = if frame_idx % 2 == 1 { 2.0 } else { 0.0 };
-                    pos_bottom = 20.0 + bob;
-
                     if pos_x <= left_edge {
                         pos_x = left_edge;
-                        pos_bottom = 20.0;
                         state = CompanionState::LeftTurn;
                         state_time = 0.0;
                         set_bubble_text.set("Turning... 🍃");
@@ -233,7 +233,6 @@ pub fn AthenaWidget() -> impl IntoView {
 
                 // State 5: Turn Around at Left Edge
                 CompanionState::LeftTurn => {
-                    pos_bottom = 20.0;
                     pos_x = left_edge;
                     if state_time < 500.0 {
                         set_current_sprite.set(SPRITE_PONDER);
@@ -246,17 +245,15 @@ pub fn AthenaWidget() -> impl IntoView {
                     } else {
                         state = CompanionState::PatrolRight;
                         state_time = 0.0;
+                        moving_right = true;
                         set_flip.set(-1.0);
                         set_bubble_text.set("Ask Athena!");
                         set_bubble_icon.set("💬");
                     }
                 }
 
-                // State 6: Interrupted Chat Dock (Waiting beside chat modal at bottom)
+                // State 6: Interrupted Chat (STAYS WHERE CLICKED ON, zero teleportation)
                 CompanionState::InterruptedChat => {
-                    let target_x = (win_w - 490.0).max(20.0);
-                    pos_x += (target_x - pos_x) * 0.18;
-                    pos_bottom = 20.0;
                     set_flip.set(1.0);
                     set_opacity.set(1.0);
 
@@ -264,12 +261,8 @@ pub fn AthenaWidget() -> impl IntoView {
                     set_current_sprite.set(if cycle == 0 { SPRITE_ASK_INVITE } else { SPRITE_PONDER });
                 }
 
-                // State 7: Thinking & Loading
+                // State 7: Thinking & Loading (STAYS WHERE CLICKED ON)
                 CompanionState::Thinking => {
-                    let target_x = (win_w - 490.0).max(20.0);
-                    pos_x += (target_x - pos_x) * 0.18;
-                    pos_bottom = 20.0;
-
                     let frame = (anim_tick / 8) % 2;
                     set_current_sprite.set(if frame == 0 { SPRITE_LOADING } else { SPRITE_THINK });
                     set_bubble_text.set("Thinking...");
@@ -277,12 +270,8 @@ pub fn AthenaWidget() -> impl IntoView {
                     set_bubble_dot.set("#60a5fa");
                 }
 
-                // State 8: Answering
+                // State 8: Answering (STAYS WHERE CLICKED ON)
                 CompanionState::Answering => {
-                    let target_x = (win_w - 490.0).max(20.0);
-                    pos_x += (target_x - pos_x) * 0.18;
-                    pos_bottom = 20.0;
-
                     if state_time < 1000.0 {
                         set_current_sprite.set(SPRITE_EXCITED);
                         set_bubble_text.set("Got it!");
