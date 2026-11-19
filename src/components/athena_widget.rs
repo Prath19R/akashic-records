@@ -350,8 +350,14 @@ pub fn AthenaWidget() -> impl IntoView {
                         current_frame_idx = (current_frame_idx + 1) % 6;
                     }
 
+                    let patrol_w = right_boundary - left_boundary;
+                    let q1 = left_boundary + patrol_w * 0.25;
+                    let q2 = left_boundary + patrol_w * 0.50;
+                    let q3 = left_boundary + patrol_w * 0.75;
+
                     match direction {
                         Direction::Right => {
+                            let prev_x = pos_x;
                             pos_x += speed;
                             set_current_sprite.set(RUN_RIGHT[current_frame_idx]);
 
@@ -364,9 +370,20 @@ pub fn AthenaWidget() -> impl IntoView {
                                 set_bubble_text.set("ouch!");
                                 set_bubble_icon.set("💫");
                                 set_bubble_dot.set("#f59e0b");
+                            } else if (prev_x < q1 && pos_x >= q1)
+                                || (prev_x < q2 && pos_x >= q2)
+                                || (prev_x < q3 && pos_x >= q3)
+                            {
+                                state = CharacterState::PlayfulHop;
+                                state_time = 0.0;
+                                anim_accum_ms = 0.0;
+                                set_bubble_text.set("Hop! ✨");
+                                set_bubble_icon.set("✨");
+                                set_bubble_dot.set("#a7f3d0");
                             }
                         }
                         Direction::Left => {
+                            let prev_x = pos_x;
                             pos_x -= speed;
                             set_current_sprite.set(RUN_LEFT[current_frame_idx]);
 
@@ -379,6 +396,16 @@ pub fn AthenaWidget() -> impl IntoView {
                                 set_bubble_text.set("Turning... 🍃");
                                 set_bubble_icon.set("🍃");
                                 set_bubble_dot.set("#f59e0b");
+                            } else if (prev_x > q3 && pos_x <= q3)
+                                || (prev_x > q2 && pos_x <= q2)
+                                || (prev_x > q1 && pos_x <= q1)
+                            {
+                                state = CharacterState::PlayfulHop;
+                                state_time = 0.0;
+                                anim_accum_ms = 0.0;
+                                set_bubble_text.set("Hop! ✨");
+                                set_bubble_icon.set("✨");
+                                set_bubble_dot.set("#a7f3d0");
                             }
                         }
                     }
@@ -446,11 +473,20 @@ pub fn AthenaWidget() -> impl IntoView {
                     }
                 }
 
-                // 6. Playful Hop (450ms vertical arc)
+                // 6. Playful Hop (450ms vertical arc every 1/4 of the way)
                 CharacterState::PlayfulHop => {
                     let progress = (state_time / 450.0).min(1.0);
                     let hop_y = (progress * std::f64::consts::PI).sin() * 24.0;
                     pos_bottom = floor_bottom + hop_y;
+
+                    // Maintain forward momentum during hop
+                    let hop_speed = 1.1;
+                    if direction == Direction::Right {
+                        pos_x = (pos_x + hop_speed).min(right_boundary);
+                    } else {
+                        pos_x = (pos_x - hop_speed).max(left_boundary);
+                    }
+
                     set_current_sprite.set(if direction == Direction::Left { HOP_LEFT } else { HOP_RIGHT });
 
                     if state_time >= 450.0 {
@@ -458,6 +494,9 @@ pub fn AthenaWidget() -> impl IntoView {
                         state = CharacterState::Running;
                         state_time = 0.0;
                         anim_accum_ms = 0.0;
+                        set_bubble_text.set("Ask Athena!");
+                        set_bubble_icon.set("💬");
+                        set_bubble_dot.set("#34d399");
                     }
                 }
 
