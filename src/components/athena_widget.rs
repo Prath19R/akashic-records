@@ -162,9 +162,19 @@ pub fn AthenaWidget() -> impl IntoView {
                 Some(w) => w,
                 None => return,
             };
-            let win_w = win.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(1200.0);
-            let _win_h = win.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
-            let right_boundary = (win_w - 90.0).max(120.0);
+            let win_w = win
+                .inner_width()
+                .ok()
+                .and_then(|v| v.as_f64())
+                .filter(|v| !v.is_nan() && *v > 100.0)
+                .unwrap_or(1200.0);
+            let _win_h = win
+                .inner_height()
+                .ok()
+                .and_then(|v| v.as_f64())
+                .filter(|v| !v.is_nan() && *v > 100.0)
+                .unwrap_or(800.0);
+            let right_boundary = (win_w - 90.0).max(left_boundary + 50.0);
 
             // Compute delta time with tab-suspension clamping
             let current_now = perf.as_ref().map(|p| p.now()).unwrap_or(last_now + 16.67);
@@ -646,27 +656,41 @@ pub fn AthenaWidget() -> impl IntoView {
     // ─────────────────────────────────────────────────────────────────────────
     let modal_layout = move || {
         let (win_w, win_h) = if let Some(w) = web_sys::window() {
-            let width = w.inner_width().ok().and_then(|v| v.as_f64()).unwrap_or(1200.0);
-            let height = w.inner_height().ok().and_then(|v| v.as_f64()).unwrap_or(800.0);
+            let width = w
+                .inner_width()
+                .ok()
+                .and_then(|v| v.as_f64())
+                .filter(|v| !v.is_nan() && *v > 100.0)
+                .unwrap_or(1200.0);
+            let height = w
+                .inner_height()
+                .ok()
+                .and_then(|v| v.as_f64())
+                .filter(|v| !v.is_nan() && *v > 100.0)
+                .unwrap_or(800.0);
             (width, height)
         } else {
             (1200.0, 800.0)
         };
 
         // Thought bubble size: 460px max width, 540px max height (readable, not too big or small)
-        let modal_width: f64 = 460.0_f64.min(win_w - 24.0);
-        let modal_height: f64 = 540.0_f64.min(win_h - 165.0).max(380.0);
+        let modal_width: f64 = (win_w - 24.0).clamp(240.0, 460.0);
+        let modal_height: f64 = (win_h - 165.0).clamp(300.0, 540.0);
 
         // Center thought bubble horizontally over Nahida's current X position
         let athena_center_x = x.get() + 48.0;
         let ideal_left = athena_center_x - (modal_width / 2.0);
-        let modal_left = ideal_left.clamp(12.0, (win_w - modal_width - 12.0).max(12.0));
+        let min_left = 12.0_f64;
+        let max_left = (win_w - modal_width - 12.0).max(min_left);
+        let modal_left = ideal_left.clamp(min_left, max_left);
 
         // Position bottom of thought bubble directly above Nahida's head (+ gap for connector dots)
         let modal_bottom = bottom.get() + 116.0;
 
         // Tail connector offset (points directly down towards Athena)
-        let tail_x = (athena_center_x - modal_left).clamp(36.0, modal_width - 36.0);
+        let min_tail = 36.0_f64;
+        let max_tail = (modal_width - 36.0).max(min_tail);
+        let tail_x = (athena_center_x - modal_left).clamp(min_tail, max_tail);
 
         (modal_left, modal_bottom, modal_width, modal_height, tail_x)
     };
