@@ -12,6 +12,163 @@
     <link data-trunk rel="css" href="style/output.css" />
     <link data-trunk rel="copy-file" href="assets/resume.pdf" />
     <link data-trunk rel="copy-dir" href="assets" />
+    <script>
+      (function() {
+        const CACHE_NAME = 'akashic-chibi-v1';
+        const CHIBI_ASSETS = [
+          "assets/chibi/01_movement/run_left_01.png",
+          "assets/chibi/01_movement/run_left_02.png",
+          "assets/chibi/01_movement/run_left_03.png",
+          "assets/chibi/01_movement/run_left_04.png",
+          "assets/chibi/01_movement/run_left_05.png",
+          "assets/chibi/01_movement/run_left_06.png",
+          "assets/chibi/01_movement/run_right_01.png",
+          "assets/chibi/01_movement/run_right_02.png",
+          "assets/chibi/01_movement/run_right_03.png",
+          "assets/chibi/01_movement/run_right_04.png",
+          "assets/chibi/01_movement/run_right_05.png",
+          "assets/chibi/01_movement/run_right_06.png",
+          "assets/chibi/02_physics_events/dragged_left_01.png",
+          "assets/chibi/02_physics_events/dragged_left_02.png",
+          "assets/chibi/02_physics_events/dragged_left_03.png",
+          "assets/chibi/02_physics_events/dragged_right_01.png",
+          "assets/chibi/02_physics_events/dragged_right_03.png",
+          "assets/chibi/02_physics_events/dropped_left_01.png",
+          "assets/chibi/02_physics_events/dropped_right_01.png",
+          "assets/chibi/02_physics_events/ending_left_01.png",
+          "assets/chibi/02_physics_events/getting_02.png",
+          "assets/chibi/02_physics_events/rising_03.png",
+          "assets/chibi/02_physics_events/rising_04.png",
+          "assets/chibi/02_physics_events/soft_fall_01.png",
+          "assets/chibi/03_chat_interaction/excited_left_01.png",
+          "assets/chibi/03_chat_interaction/excited_left_03.png",
+          "assets/chibi/03_chat_interaction/excited_right_01.png",
+          "assets/chibi/03_chat_interaction/excited_right_03.png",
+          "assets/chibi/03_chat_interaction/think_left_01.png",
+          "assets/chibi/03_chat_interaction/think_left_02.png",
+          "assets/chibi/03_chat_interaction/think_right_01.png",
+          "assets/chibi/03_chat_interaction/think_right_02.png",
+          "assets/chibi/04_emotions/angry_left_01.png",
+          "assets/chibi/04_emotions/angry_left_02.png",
+          "assets/chibi/04_emotions/angry_left_03.png",
+          "assets/chibi/04_emotions/angry_left_04.png",
+          "assets/chibi/04_emotions/angry_right_01.png",
+          "assets/chibi/04_emotions/angry_right_02.png",
+          "assets/chibi/04_emotions/angry_right_03.png",
+          "assets/chibi/04_emotions/angry_right_04.png",
+          "assets/chibi/04_emotions/pout_01.png",
+          "assets/chibi/04_emotions/pout_02.png",
+          "assets/chibi/04_emotions/pout_03.png",
+          "assets/chibi/04_emotions/shock_01.png",
+          "assets/chibi/04_emotions/shock_02.png",
+          "assets/chibi/04_emotions/shock_03.png",
+          "assets/chibi/04_emotions/shock_04.png",
+          "assets/chibi/05_playful/hop_left_01.png",
+          "assets/chibi/05_playful/hop_right_01.png",
+          "assets/chibi/05_playful/peek_left_01.png",
+          "assets/chibi/05_playful/peek_right_01.png",
+          "assets/chibi/05_playful/twirl_left_01.png",
+          "assets/chibi/05_playful/twirl_right_01.png"
+        ];
+
+        window.__chibiBlobCache = new Map();
+        window.__isChibiCacheReady = false;
+
+        function getBasePrefix() {
+          const path = window.location.pathname;
+          if (path.startsWith('/akashic-records')) {
+            return '/akashic-records/';
+          }
+          return '/';
+        }
+
+        function resolveUrl(relPath) {
+          const clean = relPath.replace(/^\.?\/?/, '');
+          return getBasePrefix() + clean;
+        }
+
+        window.__getChibiAsset = function(path) {
+          if (!path) return '';
+          const clean = path.replace(/^\.?\/?/, '');
+          if (window.__chibiBlobCache.has(clean)) {
+            return window.__chibiBlobCache.get(clean);
+          }
+          if (window.__chibiBlobCache.has(path)) {
+            return window.__chibiBlobCache.get(path);
+          }
+          return resolveUrl(path);
+        };
+
+        async function fetchWithRetry(url, maxRetries = 10) {
+          let delay = 250;
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              const resp = await fetch(url, { cache: 'no-cache' });
+              if (!resp.ok) throw new Error('HTTP ' + resp.status);
+              const clone = resp.clone();
+              if (window.caches) {
+                try {
+                  const cache = await caches.open(CACHE_NAME);
+                  await cache.put(url, clone);
+                } catch (_) {}
+              }
+              const blob = await resp.blob();
+              return blob;
+            } catch (err) {
+              if (attempt === maxRetries && window.caches) {
+                try {
+                  const cache = await caches.open(CACHE_NAME);
+                  const matched = await cache.match(url);
+                  if (matched) return await matched.blob();
+                } catch (_) {}
+              }
+              await new Promise(r => setTimeout(r, delay));
+              delay = Math.min(delay * 1.5, 2000);
+            }
+          }
+          throw new Error('Failed to load asset after retries: ' + url);
+        }
+
+        async function cacheAllAssets() {
+          let pending = [...CHIBI_ASSETS];
+          while (pending.length > 0) {
+            const nextPending = [];
+            const promises = pending.map(async (path) => {
+              const fullUrl = resolveUrl(path);
+              try {
+                const blob = await fetchWithRetry(fullUrl, 8);
+                const blobUrl = URL.createObjectURL(blob);
+                const clean = path.replace(/^\.?\/?/, '');
+                window.__chibiBlobCache.set(clean, blobUrl);
+                window.__chibiBlobCache.set(path, blobUrl);
+
+                // Pre-decode into browser GPU memory
+                const img = new Image();
+                img.src = blobUrl;
+                if (img.decode) {
+                  img.decode().catch(() => {});
+                }
+              } catch (_) {
+                nextPending.push(path);
+              }
+            });
+
+            await Promise.all(promises);
+            pending = nextPending;
+            if (pending.length > 0) {
+              await new Promise(r => setTimeout(r, 800));
+            }
+          }
+
+          window.__isChibiCacheReady = true;
+          window.dispatchEvent(new CustomEvent('chibi-cache-ready'));
+        }
+
+        if (typeof window !== 'undefined') {
+          cacheAllAssets();
+        }
+      })();
+    </script>
   </head>
   <body class="bg-[#09090b] text-zinc-100 min-h-screen overflow-x-hidden">
   </body>

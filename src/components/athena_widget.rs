@@ -83,6 +83,23 @@ const HOP_RIGHT: &str = "assets/chibi/05_playful/hop_right_01.png";
 // CHARACTER STATE MACHINE
 // ─────────────────────────────────────────────────────────────────────────────
 
+fn resolve_sprite_url(path: &str) -> String {
+    if let Some(win) = web_sys::window() {
+        if let Ok(func_val) = js_sys::Reflect::get(&win, &wasm_bindgen::JsValue::from_str("__getChibiAsset")) {
+            if let Some(func) = func_val.dyn_ref::<js_sys::Function>() {
+                if let Ok(res) = func.call1(&win, &wasm_bindgen::JsValue::from_str(path)) {
+                    if let Some(s) = res.as_string() {
+                        if !s.is_empty() {
+                            return s;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    path.to_string()
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Direction {
     Left,
@@ -107,6 +124,26 @@ pub enum CharacterState {
 #[component]
 pub fn AthenaWidget() -> impl IntoView {
     let (is_open, set_is_open) = signal(false);
+    let (cache_ready, set_cache_ready) = signal(false);
+
+    // Subscribe to browser asset cache readiness
+    Effect::new(move |_| {
+        if let Some(win) = web_sys::window() {
+            if let Ok(ready_val) = js_sys::Reflect::get(&win, &wasm_bindgen::JsValue::from_str("__isChibiCacheReady")) {
+                if ready_val.as_bool().unwrap_or(false) {
+                    set_cache_ready.set(true);
+                }
+            }
+
+            let set_ready = set_cache_ready;
+            let cb = wasm_bindgen::closure::Closure::wrap(Box::new(move |_: wasm_bindgen::JsValue| {
+                set_ready.set(true);
+            }) as Box<dyn FnMut(_)>);
+
+            let _ = win.add_event_listener_with_callback("chibi-cache-ready", cb.as_ref().unchecked_ref());
+            cb.forget();
+        }
+    });
 
     // Presentation Transforms & Pose Signals (Smooth 60 Hz Render Target)
     let (x, set_x) = signal(28.0);
@@ -801,7 +838,10 @@ pub fn AthenaWidget() -> impl IntoView {
                 // Fixed-Height Stage Box (96px height, bottom-center foot anchor prevents all jumping)
                 <div class="h-24 w-32 flex items-end justify-center pointer-events-none select-none">
                     <img
-                        src=move || current_sprite.get()
+                        src=move || {
+                            let _ = cache_ready.get();
+                            resolve_sprite_url(current_sprite.get())
+                        }
                         alt="Nahida Chibi Companion"
                         class="max-h-24 w-auto object-contain object-bottom drop-shadow-[0_8px_16px_rgba(0,0,0,0.6)] select-none pointer-events-none"
                     />
