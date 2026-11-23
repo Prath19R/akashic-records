@@ -33,7 +33,7 @@ pub fn About() -> impl IntoView {
                         "Whether optimizing cleanup jobs from 2 hours to 28 minutes or shaving latency down to sub-99ms p99 at enterprise scale, I believe in mechanical sympathy, rigorous profiling (Gatling, X-Ray), deterministic architectures, and clean code."
                     </p>
 
-                    <div class="pt-4 grid grid-cols-2 gap-4 text-xs font-mono">
+                    <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs font-mono">
                         <div class="bg-zinc-900/60 border border-zinc-800/80 p-3.5 rounded-xl">
                             <span class="text-zinc-500 uppercase tracking-wider block mb-1 text-[10px]">"Location"</span>
                             <span class="text-zinc-200 font-medium">"Pune, India"</span>
@@ -46,10 +46,21 @@ pub fn About() -> impl IntoView {
                             <span class="text-zinc-500 uppercase tracking-wider block mb-1 text-[10px]">"Primary Focus"</span>
                             <span class="text-zinc-200 font-medium">"Distributed Streams & WASM"</span>
                         </div>
-                        <div class="bg-zinc-900/60 border border-zinc-800/80 p-3.5 rounded-xl">
+                        <div class="bg-zinc-900/60 border border-zinc-800/80 p-3.5 rounded-xl overflow-hidden">
                             <span class="text-zinc-500 uppercase tracking-wider block mb-1 text-[10px]">"Contact"</span>
-                            <span class="text-zinc-200 font-medium block">"prathmeshranadive@gmail.com"</span>
-                            <span class="text-emerald-400 font-mono text-xs block mt-0.5 font-medium">"+91 8319057558"</span>
+                            <a
+                                href="mailto:prathmeshranadive@gmail.com"
+                                class="text-zinc-200 hover:text-emerald-400 font-medium block truncate transition-colors text-[11px] sm:text-xs"
+                                title="prathmeshranadive@gmail.com"
+                            >
+                                "prathmeshranadive@gmail.com"
+                            </a>
+                            <a
+                                href="tel:+918319057558"
+                                class="text-emerald-400 hover:text-emerald-300 font-mono text-[11px] sm:text-xs block mt-0.5 font-medium transition-colors"
+                            >
+                                "+91 8319057558"
+                            </a>
                         </div>
                     </div>
                 </div>

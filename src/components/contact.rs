@@ -123,7 +123,7 @@ pub fn Contact() -> impl IntoView {
                         <span class="text-zinc-500 uppercase tracking-wider block text-[10px]">"Direct Email"</span>
                         <a
                             href="mailto:prathmeshranadive@gmail.com"
-                            class="text-sm font-semibold text-zinc-200 hover:text-white transition-colors block font-mono"
+                            class="text-sm font-semibold text-zinc-200 hover:text-white transition-colors block font-mono break-all"
                         >
                             "prathmeshranadive@gmail.com"
                         </a>
